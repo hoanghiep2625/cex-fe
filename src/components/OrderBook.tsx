@@ -175,12 +175,12 @@ export default function OrderBook() {
       </div>
 
       {/* Ratio */}
-      <div className="px-4 py-3 border-t border-gray-700">
+      <div className="px-4 py-3">
         <div className="flex items-center gap-2 text-xs">
           <span className="text-white">
             B <span className="text-green-500">{buyPercent.toFixed(1)}%</span>
           </span>
-          <div className="flex-1 flex h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div className="flex-1 flex h-1 bg-gray-700 rounded-full overflow-hidden">
             <div className="bg-green-500" style={{ width: `${buyPercent}%` }} />
             <div
               className="bg-red-500"
