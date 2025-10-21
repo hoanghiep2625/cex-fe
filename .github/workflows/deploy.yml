@@ -78,11 +78,6 @@ jobs:
             set -e
             cd /srv/tahoanghiep/cex-tahoanghiep
 
-            # Nếu package GHCR là private, login trước khi pull
-            if [ -n "${{ secrets.GHCR_READ_TOKEN }}" ]; then
-              echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u hoanghiep2625 --password-stdin
-            fi
-
             # Pull image mới (latest trên nhánh main)
             docker compose pull
             docker compose up -d
