@@ -78,6 +78,9 @@ jobs:
             set -e
             cd /srv/tahoanghiep/cex-tahoanghiep
 
+            # Login to GHCR with GitHub token
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
             # Pull image mới (latest trên nhánh main)
             docker compose pull
             docker compose up -d
