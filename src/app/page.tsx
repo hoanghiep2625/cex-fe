@@ -6,9 +6,9 @@ import MarketHeader from "@/components/MarketHeader";
 import TradingPairListPanel from "@/components/TradingPairListPanel";
 import RecentTrades from "@/components/RecentTrades";
 import OrderEntryPanel from "@/components/OrderEntryPanel";
-import UserOrderManagementPanel from "@/components/UserOrderManagementPanel";
 import ChartPanel from "@/components/ChartPanel";
 import GlobalStatusBar from "@/components/GlobalStatusBar";
+import UserOrderManagementPanel from "@/components/UserOrderManagementPanel";
 
 export default function Home() {
   return (
