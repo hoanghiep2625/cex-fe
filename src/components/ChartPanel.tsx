@@ -2,9 +2,14 @@
 
 import { useRef, useState, useEffect } from "react";
 
+interface TradingViewWindow extends Window {
+  TradingView?: {
+    widget: new (config: Record<string, unknown>) => void;
+  };
+}
+
 export default function ChartPanel() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const [activeTab, setActiveTab] = useState<"chart" | "info" | "trades">(
     "chart"
   );
@@ -41,7 +46,7 @@ export default function ChartPanel() {
       scriptLoaded &&
       chartContainerRef.current
     ) {
-      const win = window as any;
+      const win = window as TradingViewWindow;
       chartContainerRef.current.innerHTML = "";
 
       if (win.TradingView) {
