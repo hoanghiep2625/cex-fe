@@ -17,6 +17,9 @@ const config: Config = {
       animation: {
         marquee: "marquee 150s linear infinite",
       },
+      flex: {
+        "2.5": "2.5",
+      },
     },
   },
   plugins: [],

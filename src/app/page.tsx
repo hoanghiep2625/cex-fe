@@ -20,7 +20,7 @@ export default function Home() {
           <MarketHeader />
           <div className="flex-1 flex gap-[4px]">
             <OrderBook />
-            <div className="flex-2 flex flex-col gap-[4px]">
+            <div className="flex-[2.5] flex flex-col gap-[4px]">
               <ChartPanel />
               <OrderEntryPanel />
             </div>
