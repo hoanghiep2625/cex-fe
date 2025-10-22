@@ -1,6 +1,12 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function MenuBar() {
+  const { user, loading, isAuthenticated, logout } = useAuth();
+
   return (
     <div className="bg-[#181A20] flex justify-between p-4">
       <div className="flex gap-8 justify-center items-center">
@@ -28,12 +34,40 @@ export default function MenuBar() {
       </div>
       <div className="flex gap-4 justify-center items-center">
         <Image src="/search-outline.svg" alt="Search" width={25} height={25} />
-        <button className="text-white bg-[#333B47] px-2 py-[5px] rounded-md text-sm">
-          Đăng nhập
-        </button>
-        <button className="text-black bg-[#FCD535] px-2 py-[5px] rounded-md text-sm">
-          Đăng ký
-        </button>
+
+        {loading ? (
+          // Đang check auth
+          <div className="text-gray-400 text-sm">Đang kiểm tra...</div>
+        ) : isAuthenticated ? (
+          // Đã đăng nhập
+          <>
+            <div className="flex items-center gap-3 px-4 py-1 border border-gray-500 bg-[#181A20] rounded-md">
+              <span className="text-white text-sm">
+                {user?.email || user?.username}
+              </span>
+            </div>
+            <button
+              onClick={logout}
+              className="text-white bg-[#E63946] hover:bg-[#d62828] px-3 py-[5px] rounded-md text-sm transition"
+            >
+              Đăng xuất
+            </button>
+          </>
+        ) : (
+          // Chưa đăng nhập
+          <>
+            <Link
+              href="/login"
+              className="text-white bg-[#333B47] px-2 py-[5px] rounded-md text-sm hover:bg-[#444C57] transition"
+            >
+              Đăng nhập
+            </Link>
+            <button className="text-black bg-[#FCD535] hover:bg-yellow-400 px-2 py-[5px] rounded-md text-sm transition">
+              Đăng ký
+            </button>
+          </>
+        )}
+
         <div className="flex gap-4 justify-center items-center">
           <svg
             className="bn-svg w-[24px] h-[24px] text-white text-PrimaryText hover:text-PrimaryYellow"

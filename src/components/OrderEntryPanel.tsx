@@ -1,7 +1,10 @@
 "use client";
 
+import { useAuth } from "@/hooks/useAuth";
+import { useBalance } from "@/hooks/useBalance";
 import { CircleAlert } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function OrderEntryPanel() {
   const [accountType, setAccountType] = useState<
@@ -10,102 +13,23 @@ export default function OrderEntryPanel() {
   const [orderType, setOrderType] = useState<"limit" | "market" | "stop">(
     "limit"
   );
+  const { user, loading, isAuthenticated } = useAuth();
+  const { balances, balanceLoading, fetchBalance } = useBalance();
 
+  // Fetch balance khi user đăng nhập
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      fetchBalance();
+    }
+  }, [isAuthenticated, loading, fetchBalance]);
+
+  // Get BTC and USDT balances
+  const btcBalance =
+    balances.find((b) => b.currency === "BTC")?.available || "0";
+  const usdtBalance =
+    balances.find((b) => b.currency === "USDT")?.available || "0";
   return (
     <>
-      <style>{`
-        input[type='range'] {
-          appearance: none;
-          width: 100%;
-          height: 2px;
-          border-radius: 5px;
-          background: linear-gradient(to right, #374151 0%, #374151 100%);
-          outline: none;
-          background-image: 
-            linear-gradient(to right,
-              #374151 0%,
-              #374151 5%, 
-              transparent 5%, 
-              transparent 10%,
-              #374151 10%,
-              #374151 15%,
-              transparent 15%,
-              transparent 20%,
-              #374151 20%,
-              #374151 25%,
-              transparent 25%,
-              transparent 30%,
-              #374151 30%,
-              #374151 35%,
-              transparent 35%,
-              transparent 40%,
-              #374151 40%,
-              #374151 45%,
-              transparent 45%,
-              transparent 50%,
-              #374151 50%,
-              #374151 55%,
-              transparent 55%,
-              transparent 60%,
-              #374151 60%,
-              #374151 65%,
-              transparent 65%,
-              transparent 70%,
-              #374151 70%,
-              #374151 75%,
-              transparent 75%,
-              transparent 80%,
-              #374151 80%,
-              #374151 85%,
-              transparent 85%,
-              transparent 90%,
-              #374151 90%,
-              #374151 95%,
-              transparent 95%,
-              transparent 100%
-            );
-          background-size: 100% 100%;
-          background-position: 0 0;
-          background-repeat: no-repeat;
-        }
-
-        input[type='range']::-webkit-slider-thumb {
-          appearance: none;
-          width: 0;
-          height: 0;
-          border-left: 6px solid transparent;
-          border-right: 6px solid transparent;
-          border-top: 8px solid white;
-          background: transparent;
-          cursor: pointer;
-          filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
-        }
-
-        input[type='range']::-moz-range-thumb {
-          width: 0;
-          height: 0;
-          border-left: 6px solid transparent;
-          border-right: 6px solid transparent;
-          border-top: 8px solid white;
-          background: transparent;
-          cursor: pointer;
-          border: none;
-          filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
-        }
-
-        input[type='range']::-webkit-slider-runnable-track {
-          appearance: none;
-          width: 100%;
-          height: 2px;
-          background: #374151;
-          border-radius: 5px;
-        }
-
-        input[type='range']::-moz-range-track {
-          background: transparent;
-          border: none;
-        }
-      `}</style>
       <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col">
         {/* Account Type Tabs */}
         <div className="px-4 pt-3 border-b border-gray-700 flex items-center gap-6">
@@ -199,47 +123,60 @@ export default function OrderEntryPanel() {
         <div className="flex-1 px-4 pb-3 grid grid-cols-2 gap-4 overflow-y-auto">
           {/* BUY FORM */}
           <div className="space-y-3">
-            <div>
-              <div className="flex items-center rounded  border border-gray-700 px-3 py-2">
-                <input
-                  type="text"
-                  placeholder="Giá"
-                  className="bg-transparent flex-1 outline-none text-sm"
-                />
-                <div className="flex flex-col gap-0">
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▲
-                  </button>
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▼
-                  </button>
+            {/* Giá */}
+            <div className="flex">
+              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 font-semibold">Giá</div>
+                <div className="flex items-center gap-1 flex-1 justify-end">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                    />
+                  </div>
+                  <div className="text-sm text-white font-semibold">USDT</div>
                 </div>
-                <span className="text-xs text-gray-400 ml-2">BTC</span>
+              </div>
+              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▲
+                </button>
+                <hr className="w-full border-gray-700" />
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▼
+                </button>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center rounded border border-gray-700 px-3 py-2">
-                <input
-                  type="text"
-                  placeholder="Số lượng"
-                  className="bg-transparent flex-1 outline-none text-sm"
-                />
-                <div className="flex flex-col gap-0">
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▲
-                  </button>
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▼
-                  </button>
+            <div className="flex">
+              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 font-semibold">
+                  Số lượng
                 </div>
-                <span className="text-xs text-gray-400 ml-2">BTC</span>
+                <div className="flex items-center gap-1 flex-1 justify-end">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                    />
+                  </div>
+                  <div className="text-sm text-white font-semibold">BTC</div>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▲
+                </button>
+                <hr className="w-full border-gray-700" />
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▼
+                </button>
               </div>
             </div>
 
             {/* Slider */}
             <div className="">
-              <input type="range" className="w-full" />
+              <input type="range" className="w-full h-[2px] " />
             </div>
 
             {/* TP/SL */}
@@ -250,68 +187,90 @@ export default function OrderEntryPanel() {
               </label>
             </div>
 
-            {/* Available */}
+            {/* Available - BUY */}
             <div className="text-xs space-y-1">
               <div className="flex justify-between text-white">
                 <span className="text-gray-500">Khả dụng</span>
-                <span>- USDT</span>
+                <span>
+                  {balanceLoading ? "-" : parseFloat(usdtBalance).toFixed(8)}{" "}
+                  USDT
+                </span>
               </div>
               <div className="flex justify-between text-white">
                 <span className="underline text-gray-500">Mua tối đa</span>
-                <span>-- BTC</span>
+                <span>
+                  {balanceLoading
+                    ? "--"
+                    : (parseFloat(usdtBalance) / 100000).toFixed(8)}{" "}
+                  BTC
+                </span>
               </div>
             </div>
 
             {/* Buy Button */}
-            <button className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center">
+            <Link
+              href="/login"
+              className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center"
+            >
               Đăng nhập
-            </button>
+            </Link>
           </div>
 
           {/* SELL FORM */}
           <div className="space-y-3">
-            <div>
-              <div className="flex items-center gap-2 rounded px-3 py-2 border border-gray-700">
-                <input
-                  type="text"
-                  placeholder="Giá"
-                  defaultValue="107.717,47"
-                  className="bg-transparent flex-1 outline-none text-sm"
-                />
-                <div className="flex flex-col gap-0">
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▲
-                  </button>
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▼
-                  </button>
+            <div className="flex">
+              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 font-semibold">Giá</div>
+                <div className="flex items-center gap-1 flex-1 justify-end">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                    />
+                  </div>
+                  <div className="text-sm text-white font-semibold">USDT</div>
                 </div>
-                <span className="text-xs text-gray-400 ml-2">USDT</span>
+              </div>
+              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▲
+                </button>
+                <hr className="w-full border-gray-700" />
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▼
+                </button>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center rounded border border-gray-700 px-3 py-2">
-                <input
-                  type="text"
-                  placeholder="Số lượng"
-                  className="bg-transparent flex-1 outline-none text-sm"
-                />
-                <div className="flex flex-col gap-0">
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▲
-                  </button>
-                  <button className="text-xs text-gray-400 hover:text-white leading-none">
-                    ▼
-                  </button>
+            <div className="flex">
+              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 font-semibold">
+                  Số lượng
                 </div>
-                <span className="text-xs text-gray-400 ml-2">BTC</span>
+                <div className="flex items-center gap-1 flex-1 justify-end">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                    />
+                  </div>
+                  <div className="text-sm text-white font-semibold">BTC</div>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▲
+                </button>
+                <hr className="w-full border-gray-700" />
+                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
+                  ▼
+                </button>
               </div>
             </div>
 
             {/* Slider */}
             <div className="">
-              <input type="range" className="w-full" />
+              <input type="range" className="w-full h-[2px] " />
             </div>
 
             {/* TP/SL */}
@@ -322,22 +281,32 @@ export default function OrderEntryPanel() {
               </label>
             </div>
 
-            {/* Available */}
+            {/* Available - SELL */}
             <div className="text-xs space-y-1">
               <div className="flex justify-between text-white">
                 <span className="text-gray-500">Khả dụng</span>
-                <span>- BTC</span>
+                <span>
+                  {balanceLoading ? "-" : parseFloat(btcBalance).toFixed(8)} BTC
+                </span>
               </div>
               <div className="flex justify-between text-white">
                 <span className="underline text-gray-500">Bán tối đa</span>
-                <span>-- USDT</span>
+                <span>
+                  {balanceLoading
+                    ? "--"
+                    : (parseFloat(btcBalance) * 100000).toFixed(8)}{" "}
+                  USDT
+                </span>
               </div>
             </div>
 
             {/* Sell Button */}
-            <button className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center">
+            <Link
+              href="/login"
+              className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center"
+            >
               Đăng nhập
-            </button>
+            </Link>
           </div>
         </div>
       </div>
