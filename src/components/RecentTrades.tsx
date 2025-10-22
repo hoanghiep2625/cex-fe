@@ -95,10 +95,10 @@ export default function RecentTrades() {
                   maximumFractionDigits: 2,
                 })}
               </div>
-              <div className="text-gray-300 text-xs">
+              <div className="text-white text-xs">
                 {trade.quantity.toFixed(5)}
               </div>
-              <div className="text-gray-400 text-xs">{trade.time}</div>
+              <div className="text-white text-xs">{trade.time}</div>
             </div>
           ))}
         </div>

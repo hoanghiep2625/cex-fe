@@ -129,15 +129,15 @@ export default function TradingPairListPanel() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="font-semibold text-white">
+              <div className="flex gap-8">
+                <div className="font-semibold text-white text-right">
                   {pair.price.toLocaleString("en-US", {
                     minimumFractionDigits: 4,
                     maximumFractionDigits: 4,
                   })}
                 </div>
                 <div
-                  className={`font-semibold ${
+                  className={`font-semibold w-14 text-right ${
                     pair.change > 0 ? "text-green-400" : "text-red-400"
                   }`}
                 >
