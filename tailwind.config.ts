@@ -18,6 +18,7 @@ const config: Config = {
         marquee: "marquee 150s linear infinite",
       },
       flex: {
+        "1.7": "1.7",
         "2.5": "2.5",
       },
     },

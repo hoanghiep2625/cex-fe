@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleAlert } from "lucide-react";
 import { useState } from "react";
 
 export default function OrderEntryPanel() {
@@ -108,50 +109,58 @@ export default function OrderEntryPanel() {
       <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col">
         {/* Account Type Tabs */}
         <div className="px-4 pt-3 border-b border-gray-700 flex items-center gap-6">
-          <button
-            onClick={() => setAccountType("spot")}
-            className={`pb-2 text-[12px] font-semibold relative ${
-              accountType === "spot" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Spot
+          <div className="relative inline-flex">
+            <button
+              onClick={() => setAccountType("spot")}
+              className={`pb-2 text-[12px] font-semibold ${
+                accountType === "spot" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Spot
+            </button>
             {accountType === "spot" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
             )}
-          </button>
-          <button
-            onClick={() => setAccountType("cross")}
-            className={`pb-2 text-[12px] font-semibold relative ${
-              accountType === "cross" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Cross Margin
+          </div>
+          <div className="relative inline-flex">
+            <button
+              onClick={() => setAccountType("cross")}
+              className={`pb-2 text-[12px] font-semibold ${
+                accountType === "cross" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Cross Margin
+            </button>
             {accountType === "cross" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
             )}
-          </button>
-          <button
-            onClick={() => setAccountType("isolated")}
-            className={`pb-2 text-[12px] font-semibold relative ${
-              accountType === "isolated" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Isolated
+          </div>
+          <div className="relative inline-flex">
+            <button
+              onClick={() => setAccountType("isolated")}
+              className={`pb-2 text-[12px] font-semibold ${
+                accountType === "isolated" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Isolated
+            </button>
             {accountType === "isolated" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
             )}
-          </button>
-          <button
-            onClick={() => setAccountType("luoi")}
-            className={`pb-2 text-[12px] font-semibold relative ${
-              accountType === "luoi" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Lưới
+          </div>
+          <div className="relative inline-flex">
+            <button
+              onClick={() => setAccountType("luoi")}
+              className={`pb-2 text-[12px] font-semibold ${
+                accountType === "luoi" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Lưới
+            </button>
             {accountType === "luoi" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
             )}
-          </button>
+          </div>
         </div>
 
         {/* Order Type Selection */}
@@ -181,8 +190,8 @@ export default function OrderEntryPanel() {
             Stop Limit
             <span className="text-xs">▼</span>
           </button>
-          <button className="text-gray-400 hover:text-white font-bold text-[14px]">
-            ⓘ
+          <button className="text-gray-400 hover:text-white ">
+            <CircleAlert width={16} height={16} />
           </button>
         </div>
 
@@ -254,7 +263,7 @@ export default function OrderEntryPanel() {
             </div>
 
             {/* Buy Button */}
-            <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center">
+            <button className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center">
               Đăng nhập
             </button>
           </div>
@@ -326,7 +335,7 @@ export default function OrderEntryPanel() {
             </div>
 
             {/* Sell Button */}
-            <button className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center">
+            <button className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center">
               Đăng nhập
             </button>
           </div>

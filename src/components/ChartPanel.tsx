@@ -83,46 +83,46 @@ export default function ChartPanel() {
   // Chart UI component
   return (
     <div className="flex-2 bg-[#181A20] rounded-[10px] flex flex-col">
-      <div className="bg-[#181A20] h-[50px] rounded-t-[10px] border-b border-b-gray-700 px-4 flex items-end">
-        <button
-          onClick={() => setActiveTab("chart")}
-          className="relative mr-8 text-[13px] font-semibold pb-3 cursor-pointer transition-colors duration-200 group"
-        >
-          <span
-            className={activeTab === "chart" ? "text-white" : "text-gray-400"}
+      <div className="bg-[#181A20] h-[50px] rounded-t-[10px] border-b border-b-gray-700 px-4 flex items-center gap-6">
+        <div className="relative inline-flex">
+          <button
+            onClick={() => setActiveTab("chart")}
+            className={`text-[13px] font-semibold ${
+              activeTab === "chart" ? "text-white" : "text-gray-400"
+            }`}
           >
             Đồ thị
-          </span>
+          </button>
           {activeTab === "chart" && (
-            <div className="absolute bottom-[-8px] left-0 right-0 h-[2px] bg-yellow-400 w-fit" />
+            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
           )}
-        </button>
-        <button
-          onClick={() => setActiveTab("info")}
-          className="relative mr-8 text-[13px] font-semibold pb-3 cursor-pointer transition-colors duration-200 group"
-        >
-          <span
-            className={activeTab === "info" ? "text-white" : "text-gray-400"}
+        </div>
+        <div className="relative inline-flex">
+          <button
+            onClick={() => setActiveTab("info")}
+            className={`text-[13px] font-semibold ${
+              activeTab === "info" ? "text-white" : "text-gray-400"
+            }`}
           >
             Thông tin
-          </span>
+          </button>
           {activeTab === "info" && (
-            <div className="absolute bottom-[-8px] left-0 right-0 h-[2px] bg-yellow-400 w-fit" />
+            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
           )}
-        </button>
-        <button
-          onClick={() => setActiveTab("trades")}
-          className="relative text-[13px] font-semibold pb-3 cursor-pointer transition-colors duration-200 group"
-        >
-          <span
-            className={activeTab === "trades" ? "text-white" : "text-gray-400"}
+        </div>
+        <div className="relative inline-flex">
+          <button
+            onClick={() => setActiveTab("trades")}
+            className={`text-[13px] font-semibold ${
+              activeTab === "trades" ? "text-white" : "text-gray-400"
+            }`}
           >
             Dữ liệu giao dịch
-          </span>
+          </button>
           {activeTab === "trades" && (
-            <div className="absolute bottom-[-8px] left-0 right-0 h-[2px] bg-yellow-400 w-fit" />
+            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
           )}
-        </button>
+        </div>
       </div>
       {activeTab === "chart" && (
         <div className="bg-[#181A20] flex-1 rounded-b-[10px] flex flex-col">

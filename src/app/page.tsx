@@ -16,7 +16,7 @@ export default function Home() {
       <MenuBar />
       <div className="flex min-h-[900px] gap-[4px] mt-[4px] mx-[4px]">
         {/* <div className="bg-red-500 w-full h-15"></div> */}
-        <div className="flex-3 gap-[4px] flex flex-col">
+        <div className="flex-6 gap-[4px] flex flex-col">
           <MarketHeader />
           <div className="flex-1 flex gap-[4px]">
             <OrderBook />
@@ -26,7 +26,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="flex-1 flex flex-col gap-[4px]">
+        <div className="flex-[1.7] flex flex-col gap-[4px]">
           <TradingPairListPanel />
           <RecentTrades />
         </div>

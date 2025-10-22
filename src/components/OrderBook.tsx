@@ -126,7 +126,7 @@ export default function OrderBook() {
                 className="absolute inset-0 bg-red-900/5 right-0"
                 style={{ width: "30%" }}
               />
-              <span className="text-red-500 relative text-[12px] z-10">
+              <span className="text-red-400 relative text-[12px] z-10">
                 {formatPrice(ask.price)}
               </span>
               <span className="text-white text-right text-[12px] relative z-10 font-semibold">
@@ -141,7 +141,7 @@ export default function OrderBook() {
 
         {/* Current Price */}
         <div className="px-4 py-2 bg-[#181A20] gap-4 sticky flex items-center">
-          <span className="text-lg font-bold text-red-500">
+          <span className="text-lg font-bold text-red-400">
             {formatPrice(mockOrderBook.currentPrice)}
           </span>
           <span className="text-right text-[12px] text-gray-400">
@@ -160,7 +160,7 @@ export default function OrderBook() {
                 className="absolute inset-0 bg-green-900/5 right-0"
                 style={{ width: "40%" }}
               />
-              <span className="text-green-500 relative z-10">
+              <span className="text-green-400 relative z-10">
                 {formatPrice(bid.price)}
               </span>
               <span className="text-white text-right text-[12px] relative z-10 font-semibold">
@@ -178,17 +178,17 @@ export default function OrderBook() {
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 text-xs">
           <span className="text-white">
-            B <span className="text-green-500">{buyPercent.toFixed(1)}%</span>
+            B <span className="text-green-400">{buyPercent.toFixed(1)}%</span>
           </span>
           <div className="flex-1 flex h-1 bg-gray-700 rounded-full overflow-hidden">
-            <div className="bg-green-500" style={{ width: `${buyPercent}%` }} />
+            <div className="bg-green-400" style={{ width: `${buyPercent}%` }} />
             <div
-              className="bg-red-500"
+              className="bg-red-400"
               style={{ width: `${100 - buyPercent}%` }}
             />
           </div>
           <span className="text-white">
-            <span className="text-red-500">
+            <span className="text-red-400">
               {(100 - buyPercent).toFixed(1)}%
             </span>{" "}
             S

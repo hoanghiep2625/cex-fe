@@ -63,7 +63,7 @@ export default function MarketHeader() {
 
         {/* Price Display */}
         <div className="flex flex-col">
-          <span className="text-green-500 text-xl font-bold">108.650,03</span>
+          <span className="text-green-400 text-xl font-bold">108.650,03</span>
           <span className="text-white text-[12px] font-semibold">
             $108.650,03
           </span>
@@ -100,7 +100,7 @@ export default function MarketHeader() {
                   Biến động trong 24 giờ
                 </p>
               </div>
-              <span className="text-red-700 font-semibold text-[12px]">
+              <span className="text-red-400 font-semibold text-[12px]">
                 -1.483,81 -1,35%
               </span>
             </div>
