@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axiosInstance";
 import { Eye, EyeOff } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 interface LoginResponse {
   statusCode: number;
@@ -15,8 +15,6 @@ interface LoginResponse {
       id: number;
       email: string;
       username: string;
-      role: string;
-      is_active: boolean;
       created_at: string;
       updated_at: string;
     };
@@ -105,8 +103,6 @@ export default function LoginPage() {
             ></path>
           </svg>
           <h1 className="text-white font-semibold text-3xl py-5">Đăng nhập</h1>
-
-          <Toaster />
 
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
             <div>
