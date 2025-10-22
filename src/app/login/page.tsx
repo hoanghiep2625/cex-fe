@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axiosInstance";
 import { Eye, EyeOff } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
 
 interface LoginResponse {
   statusCode: number;
@@ -27,7 +28,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
@@ -44,12 +44,11 @@ export default function LoginPage() {
 
     // Validation
     if (!email || !password) {
-      setError("Vui lòng nhập email và mật khẩu");
+      toast.error("Vui lòng nhập email và mật khẩu");
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const response = await axiosInstance.post<LoginResponse>("/auth/login", {
@@ -64,12 +63,15 @@ export default function LoginPage() {
       // Save token to localStorage
       if (accessToken) {
         localStorage.setItem("accessToken", accessToken);
+        toast.success("Đăng nhập thành công!");
         console.log("✅ Token saved successfully");
         // Redirect to home page
-        router.push("/");
+        setTimeout(() => {
+          router.push("/");
+        }, 500);
       } else {
         console.error("❌ No accessToken in response:", response.data);
-        setError("Không nhận được access token từ server");
+        toast.error("Không nhận được access token từ server");
       }
     } catch (err) {
       const error = err as unknown;
@@ -79,7 +81,7 @@ export default function LoginPage() {
       const errorMessage =
         errorResponse?.response?.data?.message ||
         "Đăng nhập thất bại. Vui lòng thử lại.";
-      setError(errorMessage);
+      toast.error(errorMessage);
       console.error("❌ Login error:", err);
     } finally {
       setLoading(false);
@@ -104,11 +106,7 @@ export default function LoginPage() {
           </svg>
           <h1 className="text-white font-semibold text-3xl py-5">Đăng nhập</h1>
 
-          {error && (
-            <div className="bg-red-500 bg-opacity-20 border border-red-500 text-red-400 px-3 py-2 rounded-lg mb-4 text-sm">
-              {error}
-            </div>
-          )}
+          <Toaster />
 
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
             <div>
