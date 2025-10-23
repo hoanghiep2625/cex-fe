@@ -6,159 +6,68 @@ export interface OrderBookData {
   currentPrice: number;
 }
 
-interface OrderBookLevel {
-  price: string;
-  quantity: string;
-}
-
-interface WebSocketMessage {
-  type: string;
-  symbol?: string;
-  data?: {
-    asks: OrderBookLevel[];
-    bids: OrderBookLevel[];
-  };
-}
-
-// Simple hash function to detect data changes
-const hashOrderBook = (data: OrderBookLevel[] | undefined): string => {
-  if (!data) return "";
-  const asks = (data || [])
-    .map((a: OrderBookLevel) => `${a.price}:${a.quantity}`)
-    .join("|");
-  return asks;
-};
-
 export const useOrderBook = (symbol: string = "BTCUSDT") => {
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const lastHashRef = useRef<string>("");
+  const hashRef = useRef("");
 
   useEffect(() => {
-    try {
-      console.log(`🔗 Connecting to WebSocket server for ${symbol}...`);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl =
+      process.env.NEXT_PUBLIC_WS_URL ||
+      (window.location.hostname === "localhost"
+        ? `${protocol}://localhost:8080`
+        : `${protocol}//${window.location.host}`);
 
-      // Use WSS in production, WS in dev
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}`;
+    const ws = new WebSocket(wsUrl);
 
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        console.log("✅ WebSocket connected");
-        setConnected(true);
-        setError(null);
-
-        // Subscribe to real-time updates
-        ws.send(
-          JSON.stringify({
-            type: "subscribe",
-            symbol: symbol,
-          })
-        );
-      };
-
-      ws.onmessage = (event: MessageEvent<string>) => {
-        try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-
-          if (message.type === "subscribed") {
-            console.log(`✅ Subscribed to ${message.symbol}`);
-            setLoading(false);
-            return;
-          }
-
-          if (message.type === "update" && message.data) {
-            const data = message.data;
-            const currentHash = hashOrderBook(data.asks) + hashOrderBook(data.bids);
-
-            // Only update if data actually changed
-            if (currentHash === lastHashRef.current) {
-              return; // Data hasn't changed, skip update
-            }
-
-            lastHashRef.current = currentHash;
-            console.log(`📊 Order book CHANGED for ${symbol}`);
-
-            // Format: { asks: [{price: string, quantity: string}, ...], bids: [{price: string, quantity: string}, ...] }
-            const asks = (data.asks || []).map((item: OrderBookLevel) => {
-              const price = parseFloat(item.price);
-              const quantity = parseFloat(item.quantity);
-              return {
-                price,
-                quantity,
-                total: price * quantity,
-              };
-            });
-
-            const bids = (data.bids || []).map((item: OrderBookLevel) => {
-              const price = parseFloat(item.price);
-              const quantity = parseFloat(item.quantity);
-              return {
-                price,
-                quantity,
-                total: price * quantity,
-              };
-            });
-
-            // Current price = highest bid or lowest ask
-            const currentPrice =
-              bids.length > 0
-                ? bids[0].price
-                : asks.length > 0
-                  ? asks[asks.length - 1].price
-                  : 0;
-
-            setOrderBook({
-              asks,
-              bids,
-              currentPrice,
-            });
-          }
-        } catch (err) {
-          console.error("❌ Error parsing WebSocket message:", err);
-        }
-      };
-
-      ws.onerror = () => {
-        console.error("❌ WebSocket error");
-        setError("WebSocket connection error");
-        setConnected(false);
-      };
-
-      ws.onclose = () => {
-        console.log("🔌 WebSocket disconnected");
-        setConnected(false);
-      };
-
-      wsRef.current = ws;
-
-      // Cleanup on unmount - unsubscribe
-      return () => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(
-            JSON.stringify({
-              type: "unsubscribe",
-              symbol: symbol,
-            })
-          );
-          wsRef.current.close();
-        }
-      };
-    } catch (err) {
-      console.error("Error setting up WebSocket:", err);
-      setError("Failed to initialize connection");
+    ws.onopen = () => {
+      setConnected(true);
       setLoading(false);
-    }
+      ws.send(JSON.stringify({ type: "subscribe", symbol }));
+    };
+
+    ws.onmessage = ({ data }: MessageEvent) => {
+      const msg = JSON.parse(data);
+      if (msg.type === "update" && msg.data) {
+        const { asks, bids } = msg.data;
+        const hash = JSON.stringify([asks, bids]);
+        if (hash === hashRef.current) return;
+        hashRef.current = hash;
+
+        const parseLevel = (p: any) => ({
+          price: +p.price,
+          quantity: +p.quantity,
+          total: +p.price * +p.quantity,
+        });
+
+        setOrderBook({
+          asks: asks.map(parseLevel),
+          bids: bids.map(parseLevel),
+          currentPrice: bids.length
+            ? +bids[0].price
+            : asks.length
+            ? +asks[asks.length - 1].price
+            : 0,
+        });
+      }
+    };
+
+    ws.onerror = () => setError("WS Error");
+    ws.onclose = () => setConnected(false);
+
+    wsRef.current = ws;
+
+    return () => {
+      try {
+        ws.send(JSON.stringify({ type: "unsubscribe", symbol }));
+      } catch {}
+      ws.close();
+    };
   }, [symbol]);
 
-  return {
-    orderBook,
-    loading,
-    error,
-    connected,
-  };
+  return { orderBook, loading, error, connected };
 };

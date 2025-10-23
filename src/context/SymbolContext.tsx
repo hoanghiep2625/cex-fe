@@ -55,9 +55,10 @@ export const SymbolProvider = ({ children }: { children: ReactNode }) => {
         const data = response.data?.data || response.data;
 
         setSymbol(data);
-        console.log(`✅ Symbol ${symbolCode}/${type} fetched:`, data);
       } catch (err) {
-        const error = err as { response?: { data?: { message?: string } } } | undefined;
+        const error = err as
+          | { response?: { data?: { message?: string } } }
+          | undefined;
         const errorMsg =
           error?.response?.data?.message || "Failed to fetch symbol";
         setError(errorMsg);

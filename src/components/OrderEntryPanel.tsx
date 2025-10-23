@@ -66,15 +66,14 @@ export default function OrderEntryPanel({
       console.log("Placing buy order:", orderData);
       const response = await axiosInstance.post("/orders", orderData);
 
-      toast.success(
-        `✅ Lệnh mua thành công! Order ID: ${response.data.data?.orderId}`
-      );
+      toast.success(`Lệnh mua thành công!`);
       setBuyPrice("");
       setBuyQty("");
       fetchBalance(); // Refresh balance
     } catch (error) {
       const errorMsg =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Lỗi khi đặt lệnh mua";
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Lỗi khi đặt lệnh mua";
       toast.error(`❌ ${errorMsg}`);
       console.error("Error placing buy order:", error);
     } finally {
@@ -105,15 +104,14 @@ export default function OrderEntryPanel({
       console.log("Placing sell order:", orderData);
       const response = await axiosInstance.post("/orders", orderData);
 
-      toast.success(
-        `✅ Lệnh bán thành công! Order ID: ${response.data.data?.orderId}`
-      );
+      toast.success(`Lệnh bán thành công!`);
       setSellPrice("");
       setSellQty("");
       fetchBalance(); // Refresh balance
     } catch (error) {
       const errorMsg =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Lỗi khi đặt lệnh bán";
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Lỗi khi đặt lệnh bán";
       toast.error(`❌ ${errorMsg}`);
       console.error("Error placing sell order:", error);
     } finally {
