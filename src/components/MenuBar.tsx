@@ -14,7 +14,7 @@ export default function MenuBar({
   const { user, loading, isAuthenticated, logout } = useAuth();
 
   return (
-    <div className="bg-[#181A20] flex justify-between p-4">
+    <div className="bg-[#181A20] flex justify-between p-4 h-[62px]">
       <div className="flex gap-8 justify-center items-center">
         <svg
           height="24"

@@ -28,9 +28,10 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
 
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl =
-      process.env.NEXT_PUBLIC_WS_URL ||
-      `${protocol}://api-cex.tahoanghiep.com/ws?symbol=${symbol}`;
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_WS_URL || `${protocol}://api-cex.tahoanghiep.com`;
+    const wsUrl = `${baseUrl}/ws?symbol=${symbol}`;
 
     const ws = new WebSocket(wsUrl);
 

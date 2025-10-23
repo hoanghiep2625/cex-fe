@@ -36,6 +36,16 @@ export default function OrderEntryPanel({
   const [sellQty, setSellQty] = useState("");
   const [sellLoading, setSellLoading] = useState(false);
 
+  // Calculate totals
+  const buyTotal =
+    buyPrice && buyQty
+      ? (parseFloat(buyPrice) * parseFloat(buyQty)).toFixed(8)
+      : "0";
+  const sellTotal =
+    sellPrice && sellQty
+      ? (parseFloat(sellPrice) * parseFloat(sellQty)).toFixed(8)
+      : "0";
+
   // Fetch balance khi user đăng nhập
   useEffect(() => {
     if (isAuthenticated && !loading) {
@@ -296,7 +306,9 @@ export default function OrderEntryPanel({
                   <div className="flex-1">
                     <input
                       type="text"
-                      placeholder="Tối thiểu 5"
+                      value={buyTotal}
+                      readOnly
+                      placeholder="0"
                       className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
                     />
                   </div>
@@ -426,7 +438,9 @@ export default function OrderEntryPanel({
                   <div className="flex-1">
                     <input
                       type="text"
-                      placeholder="Tối thiểu 5"
+                      value={sellTotal}
+                      readOnly
+                      placeholder="0"
                       className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
                     />
                   </div>

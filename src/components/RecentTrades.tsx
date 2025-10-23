@@ -1,35 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useRecentTrades } from "@/hooks/useRecentTrades";
 
 interface Trade {
-  price: number;
-  quantity: number;
-  time: string;
-  type: "buy" | "sell";
+  price: string;
+  quantity: string;
+  time: number;
+  takerSide: "BUY" | "SELL";
 }
-
-const recentTrades: Trade[] = [
-  { price: 108.35923, quantity: 0.09234, time: "09:37:16", type: "sell" },
-  { price: 108.35921, quantity: 0.0007, time: "09:37:16", type: "buy" },
-  { price: 108.35932, quantity: 0.00032, time: "09:37:16", type: "buy" },
-  { price: 108.35912, quantity: 0.09234, time: "09:37:15", type: "sell" },
-  { price: 108.35932, quantity: 0.09234, time: "09:37:15", type: "sell" },
-  { price: 108.35912, quantity: 0.09234, time: "09:37:14", type: "sell" },
-  { price: 108.35932, quantity: 0.09234, time: "09:37:14", type: "sell" },
-  { price: 108.35912, quantity: 0.00828, time: "09:37:13", type: "sell" },
-  { price: 108.35932, quantity: 0.00828, time: "09:37:13", type: "sell" },
-  { price: 108.35932, quantity: 0.09234, time: "09:37:13", type: "sell" },
-  { price: 108.35921, quantity: 0.09234, time: "09:37:13", type: "sell" },
-  { price: 108.35932, quantity: 0.00108, time: "09:37:13", type: "sell" },
-  { price: 108.35912, quantity: 0.00108, time: "09:37:13", type: "sell" },
-  { price: 108.35921, quantity: 0.09234, time: "09:37:13", type: "sell" },
-  { price: 108.35932, quantity: 0.00108, time: "09:37:13", type: "sell" },
-  { price: 108.35912, quantity: 0.00108, time: "09:37:13", type: "sell" },
-  { price: 108.35921, quantity: 0.09234, time: "09:37:13", type: "sell" },
-  { price: 108.35932, quantity: 0.00108, time: "09:37:13", type: "sell" },
-  { price: 108.35912, quantity: 0.00108, time: "09:37:13", type: "sell" },
-];
 
 export default function RecentTrades({
   pair,
@@ -40,10 +19,39 @@ export default function RecentTrades({
 }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
 
+  // Convert pair format: "BTC_USDT" → "BTCUSDT"
+  const symbol = useMemo(() => pair.replace("_", ""), [pair]);
+  const { trades, loading, error, connected } = useRecentTrades(symbol);
+
+  // Format time from milliseconds to HH:MM:SS
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // Format price and quantity for display
+  const formatPrice = (price: string | number) => {
+    const num = typeof price === "string" ? parseFloat(price) : price;
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 8,
+    });
+  };
+
+  const formatQuantity = (quantity: string | number) => {
+    const num = typeof quantity === "string" ? parseFloat(quantity) : quantity;
+    return num.toFixed(5);
+  };
+
   return (
     <div className="h-[50%] bg-[#181A20] rounded-[10px] text-white flex flex-col overflow-hidden">
       {/* Tabs */}
-      <div className="px-4 pt-3 border-b border-gray-700 flex items-center gap-4">
+      <div className=" relative px-4 pt-3 border-b border-gray-700 flex items-center gap-4">
         <div className="relative inline-flex">
           <button
             onClick={() => setActiveTab("market")}
@@ -73,6 +81,14 @@ export default function RecentTrades({
         <button className="ml-auto text-gray-400 hover:text-gray-300 text-lg">
           ⋯
         </button>
+        {/* Connection Status */}
+        <div className="text-xs ml-2 absolute right-1 top-0">
+          {connected ? (
+            <span className="text-green-400">●</span>
+          ) : (
+            <span className="text-red-400">●</span>
+          )}
+        </div>
       </div>
 
       {/* Table Content */}
@@ -80,31 +96,30 @@ export default function RecentTrades({
         {/* Table Headers */}
         <div className="sticky top-0 bg-[#181A20] px-4 py-3 flex justify-between gap-2 text-xs text-gray-400">
           <div>Giá (USDT)</div>
-          <div>Số lượng (BTC)</div>
+          <div>Số lượng</div>
           <div>Thời gian</div>
         </div>
 
         {/* Table Rows */}
-        <div className="">
-          {recentTrades.map((trade, index) => (
+        <div>
+          {trades.map((trade) => (
             <div
-              key={index}
+              key={trade.id}
               className="px-4 py-0.5 flex justify-between gap-2 text-xs hover:bg-[#1F2329] transition"
             >
               <div
-                className={`font-semibold text-xs ${
-                  trade.type === "buy" ? "text-green-400" : "text-red-400"
+                className={`font-semibold text-xs flex-1 ${
+                  trade.takerSide === "BUY" ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {trade.price.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatPrice(trade.price)}
               </div>
-              <div className="text-white text-xs">
-                {trade.quantity.toFixed(5)}
+              <div className="text-white text-xs text-center flex-1">
+                {formatQuantity(trade.quantity)}
               </div>
-              <div className="text-white text-xs">{trade.time}</div>
+              <div className="text-white text-xs text-right flex-1">
+                {formatTime(trade.time)}
+              </div>
             </div>
           ))}
         </div>

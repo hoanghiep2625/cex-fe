@@ -49,9 +49,9 @@ export default function OrderBook() {
   );
 
   return (
-    <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col">
+    <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col relative">
       <div className="px-4 py-3 border-b border-gray-700 flex justify-between">
-        <span className="text-sm font-semibold">Số lệnh</span>
+        <span className="text-sm font-semibold">Sổ lệnh</span>
         <select
           value={grouping}
           onChange={(e) => setGrouping(e.target.value)}
@@ -71,12 +71,6 @@ export default function OrderBook() {
       </div>
 
       <div className="flex-1 overflow-y-auto flex flex-col">
-        {!connected && (
-          <div className="px-4 py-2 bg-red-900/20 text-red-400 text-xs text-center">
-            {error || "Đang kết nối..."}
-          </div>
-        )}
-
         <div>
           {asks.map((a, i) => (
             <Row key={`a${i}`} level={a} isAsk />
@@ -109,6 +103,13 @@ export default function OrderBook() {
             <span className="text-red-400">{(100 - buyPct).toFixed(1)}%</span> S
           </span>
         </div>
+      </div>
+      <div className="text-xs ml-2 absolute right-1 top-0">
+        {connected ? (
+          <span className="text-green-400">●</span>
+        ) : (
+          <span className="text-red-400">●</span>
+        )}
       </div>
     </div>
   );
