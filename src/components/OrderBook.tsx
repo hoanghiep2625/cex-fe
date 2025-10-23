@@ -18,7 +18,13 @@ export default function OrderBook() {
   const totalAsks = asks.reduce((s, a) => s + a.quantity, 0);
   const buyPct = (totalBids / (totalBids + totalAsks)) * 100 || 0;
 
-  const Row = ({ level, idx, isAsk }: any) => (
+  interface Level {
+    price: number;
+    quantity: number;
+    total: number;
+  }
+
+  const Row = ({ level, isAsk }: { level: Level; isAsk?: boolean }) => (
     <div
       className={`px-4 py-1 grid grid-cols-3 gap-4 relative text-xs hover:bg-gray-800/50`}
     >

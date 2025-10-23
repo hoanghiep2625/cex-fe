@@ -38,7 +38,12 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
         if (hash === hashRef.current) return;
         hashRef.current = hash;
 
-        const parseLevel = (p: any) => ({
+        interface Level {
+          price: string;
+          quantity: string;
+        }
+
+        const parseLevel = (p: Level) => ({
           price: +p.price,
           quantity: +p.quantity,
           total: +p.price * +p.quantity,
