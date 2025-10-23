@@ -2,11 +2,20 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useBalance } from "@/hooks/useBalance";
-import { CircleAlert } from "lucide-react";
+import { useSymbol } from "@/context/SymbolContext";
+import axiosInstance from "@/lib/axiosInstance";
+import toast from "react-hot-toast";
+import { CircleAlert, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-export default function OrderEntryPanel() {
+export default function OrderEntryPanel({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const [accountType, setAccountType] = useState<
     "spot" | "cross" | "isolated" | "luoi"
   >("spot");
@@ -15,6 +24,17 @@ export default function OrderEntryPanel() {
   );
   const { user, loading, isAuthenticated } = useAuth();
   const { balances, balanceLoading, fetchBalance } = useBalance();
+  const { symbol } = useSymbol();
+
+  // Buy form state
+  const [buyPrice, setBuyPrice] = useState("");
+  const [buyQty, setBuyQty] = useState("");
+  const [buyLoading, setBuyLoading] = useState(false);
+
+  // Sell form state
+  const [sellPrice, setSellPrice] = useState("");
+  const [sellQty, setSellQty] = useState("");
+  const [sellLoading, setSellLoading] = useState(false);
 
   // Fetch balance khi user đăng nhập
   useEffect(() => {
@@ -23,11 +43,93 @@ export default function OrderEntryPanel() {
     }
   }, [isAuthenticated, loading, fetchBalance]);
 
-  // Get BTC and USDT balances
-  const btcBalance =
-    balances.find((b) => b.currency === "BTC")?.available || "0";
-  const usdtBalance =
-    balances.find((b) => b.currency === "USDT")?.available || "0";
+  // Submit buy order
+  const handleBuyOrder = async () => {
+    if (!buyPrice || !buyQty) {
+      toast.error("Vui lòng nhập giá và số lượng");
+      return;
+    }
+
+    try {
+      setBuyLoading(true);
+
+      const orderData = {
+        symbol: symbol?.code || "BTCUSDT",
+        side: "BUY",
+        type: orderType === "limit" ? "LIMIT" : orderType.toUpperCase(),
+        price: buyPrice,
+        qty: buyQty,
+        tif: "GTC",
+        client_order_id: `buy_${Date.now()}`,
+      };
+
+      console.log("Placing buy order:", orderData);
+      const response = await axiosInstance.post("/orders", orderData);
+
+      toast.success(
+        `✅ Lệnh mua thành công! Order ID: ${response.data.data?.orderId}`
+      );
+      setBuyPrice("");
+      setBuyQty("");
+      fetchBalance(); // Refresh balance
+    } catch (error) {
+      const errorMsg =
+        (error as any)?.response?.data?.message || "Lỗi khi đặt lệnh mua";
+      toast.error(`❌ ${errorMsg}`);
+      console.error("Error placing buy order:", error);
+    } finally {
+      setBuyLoading(false);
+    }
+  };
+
+  // Submit sell order
+  const handleSellOrder = async () => {
+    if (!sellPrice || !sellQty) {
+      toast.error("Vui lòng nhập giá và số lượng");
+      return;
+    }
+
+    try {
+      setSellLoading(true);
+
+      const orderData = {
+        symbol: symbol?.code || "BTCUSDT",
+        side: "SELL",
+        type: orderType === "limit" ? "LIMIT" : orderType.toUpperCase(),
+        price: sellPrice,
+        qty: sellQty,
+        tif: "GTC",
+        client_order_id: `sell_${Date.now()}`,
+      };
+
+      console.log("Placing sell order:", orderData);
+      const response = await axiosInstance.post("/orders", orderData);
+
+      toast.success(
+        `✅ Lệnh bán thành công! Order ID: ${response.data.data?.orderId}`
+      );
+      setSellPrice("");
+      setSellQty("");
+      fetchBalance(); // Refresh balance
+    } catch (error) {
+      const errorMsg =
+        (error as any)?.response?.data?.message || "Lỗi khi đặt lệnh bán";
+      toast.error(`❌ ${errorMsg}`);
+      console.error("Error placing sell order:", error);
+    } finally {
+      setSellLoading(false);
+    }
+  };
+
+  // Get base and quote currency from symbol context
+  const baseCurrency = symbol?.baseAsset || "BTC";
+  const quoteCurrency = symbol?.quoteAsset || "USDT";
+  // Get balances for the current trading pair
+  const baseAssetBalance =
+    balances.find((b) => b.currency === baseCurrency)?.available || "0";
+  const quoteAssetBalance =
+    balances.find((b) => b.currency === quoteCurrency)?.available || "0";
+
   return (
     <>
       <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col">
@@ -43,7 +145,7 @@ export default function OrderEntryPanel() {
               Spot
             </button>
             {accountType === "spot" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
             )}
           </div>
           <div className="relative inline-flex">
@@ -56,7 +158,7 @@ export default function OrderEntryPanel() {
               Cross Margin
             </button>
             {accountType === "cross" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
             )}
           </div>
           <div className="relative inline-flex">
@@ -69,7 +171,7 @@ export default function OrderEntryPanel() {
               Isolated
             </button>
             {accountType === "isolated" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
             )}
           </div>
           <div className="relative inline-flex">
@@ -82,7 +184,7 @@ export default function OrderEntryPanel() {
               Lưới
             </button>
             {accountType === "luoi" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
             )}
           </div>
         </div>
@@ -131,10 +233,15 @@ export default function OrderEntryPanel() {
                   <div className="flex-1">
                     <input
                       type="text"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                      value={buyPrice}
+                      onChange={(e) => setBuyPrice(e.target.value)}
+                      placeholder="0"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
                     />
                   </div>
-                  <div className="text-sm text-white font-semibold">USDT</div>
+                  <div className="text-sm text-white font-semibold">
+                    {quoteCurrency}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
@@ -157,10 +264,15 @@ export default function OrderEntryPanel() {
                   <div className="flex-1">
                     <input
                       type="text"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                      value={buyQty}
+                      onChange={(e) => setBuyQty(e.target.value)}
+                      placeholder="0"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
                     />
                   </div>
-                  <div className="text-sm text-white font-semibold">BTC</div>
+                  <div className="text-sm text-white font-semibold">
+                    {baseCurrency}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
@@ -176,44 +288,70 @@ export default function OrderEntryPanel() {
 
             {/* Slider */}
             <div className="">
-              <input type="range" className="w-full h-[2px] " />
+              <input type="range" className="w-full h-0.5 " />
             </div>
 
-            {/* TP/SL */}
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="tp-buy" className="w-4 h-4" />
-              <label htmlFor="tp-buy" className="text-xs text-white">
-                TP/SL
-              </label>
+            <div className="flex">
+              <div className="border border-gray-700 rounded-md w-full p-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 font-semibold">Tổng</div>
+                <div className="flex items-center gap-1 flex-1 justify-end">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Tối thiểu 5"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
+                    />
+                  </div>
+                  <div className="text-sm text-white font-semibold">
+                    {quoteCurrency}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Available - BUY */}
             <div className="text-xs space-y-1">
               <div className="flex justify-between text-white">
                 <span className="text-gray-500">Khả dụng</span>
-                <span>
-                  {balanceLoading ? "-" : parseFloat(usdtBalance).toFixed(8)}{" "}
-                  USDT
-                </span>
+                <div className="flex items-center gap-1">
+                  <span>
+                    {balanceLoading
+                      ? "-"
+                      : parseFloat(quoteAssetBalance).toFixed(8)}{" "}
+                    {quoteCurrency}
+                  </span>
+                  <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
+                    <Plus width={12} height={12} />
+                  </div>
+                </div>
               </div>
               <div className="flex justify-between text-white">
                 <span className="underline text-gray-500">Mua tối đa</span>
                 <span>
                   {balanceLoading
                     ? "--"
-                    : (parseFloat(usdtBalance) / 100000).toFixed(8)}{" "}
-                  BTC
+                    : (parseFloat(quoteAssetBalance) / 100000).toFixed(8)}{" "}
+                  {baseCurrency}
                 </span>
               </div>
             </div>
 
-            {/* Buy Button */}
-            <Link
-              href="/login"
-              className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center"
-            >
-              Đăng nhập
-            </Link>
+            {!isAuthenticated ? (
+              <Link
+                href="/login"
+                className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+              >
+                Đăng nhập
+              </Link>
+            ) : (
+              <button
+                onClick={handleBuyOrder}
+                disabled={buyLoading}
+                className="w-full bg-green-400 hover:bg-green-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+              >
+                {buyLoading ? "Đang xử lý..." : `Mua ${baseCurrency}`}
+              </button>
+            )}
           </div>
 
           {/* SELL FORM */}
@@ -225,10 +363,15 @@ export default function OrderEntryPanel() {
                   <div className="flex-1">
                     <input
                       type="text"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                      value={sellPrice}
+                      onChange={(e) => setSellPrice(e.target.value)}
+                      placeholder="0"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
                     />
                   </div>
-                  <div className="text-sm text-white font-semibold">USDT</div>
+                  <div className="text-sm text-white font-semibold">
+                    {quoteCurrency}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
@@ -251,10 +394,15 @@ export default function OrderEntryPanel() {
                   <div className="flex-1">
                     <input
                       type="text"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                      value={sellQty}
+                      onChange={(e) => setSellQty(e.target.value)}
+                      placeholder="0"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
                     />
                   </div>
-                  <div className="text-sm text-white font-semibold">BTC</div>
+                  <div className="text-sm text-white font-semibold">
+                    {baseCurrency}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
@@ -270,15 +418,25 @@ export default function OrderEntryPanel() {
 
             {/* Slider */}
             <div className="">
-              <input type="range" className="w-full h-[2px] " />
+              <input type="range" className="w-full h-0.5 " />
             </div>
 
-            {/* TP/SL */}
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="tp-sell" className="w-4 h-4" />
-              <label htmlFor="tp-sell" className="text-xs text-white">
-                TP/SL
-              </label>
+            <div className="flex">
+              <div className="border border-gray-700 rounded-md w-full p-2 flex justify-between items-center">
+                <div className="text-xs text-gray-400 font-semibold">Tổng</div>
+                <div className="flex items-center gap-1 flex-1 justify-end">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Tối thiểu 5"
+                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
+                    />
+                  </div>
+                  <div className="text-sm text-white font-semibold">
+                    {quoteCurrency}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Available - SELL */}
@@ -286,7 +444,10 @@ export default function OrderEntryPanel() {
               <div className="flex justify-between text-white">
                 <span className="text-gray-500">Khả dụng</span>
                 <span>
-                  {balanceLoading ? "-" : parseFloat(btcBalance).toFixed(8)} BTC
+                  {balanceLoading
+                    ? "-"
+                    : parseFloat(baseAssetBalance).toFixed(8)}{" "}
+                  {baseCurrency}
                 </span>
               </div>
               <div className="flex justify-between text-white">
@@ -294,19 +455,29 @@ export default function OrderEntryPanel() {
                 <span>
                   {balanceLoading
                     ? "--"
-                    : (parseFloat(btcBalance) * 100000).toFixed(8)}{" "}
-                  USDT
+                    : (parseFloat(baseAssetBalance) * 100000).toFixed(8)}{" "}
+                  {quoteCurrency}
                 </span>
               </div>
             </div>
 
             {/* Sell Button */}
-            <Link
-              href="/login"
-              className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-[36px] flex items-center justify-center"
-            >
-              Đăng nhập
-            </Link>
+            {!isAuthenticated ? (
+              <Link
+                href="/login"
+                className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+              >
+                Đăng nhập
+              </Link>
+            ) : (
+              <button
+                onClick={handleSellOrder}
+                disabled={sellLoading}
+                className="w-full bg-red-400 hover:bg-red-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+              >
+                {sellLoading ? "Đang xử lý..." : `Bán ${baseCurrency}`}
+              </button>
+            )}
           </div>
         </div>
       </div>

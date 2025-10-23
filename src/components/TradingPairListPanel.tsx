@@ -26,7 +26,13 @@ const tradingPairs: TradingPair[] = [
   { name: "ANKR/USDT", leverage: "5x", price: 0.01031, change: -0.87 },
 ];
 
-export default function TradingPairListPanel() {
+export default function TradingPairListPanel({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -77,7 +83,7 @@ export default function TradingPairListPanel() {
                 {tab}
               </button>
               {activeTab === tab && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
               )}
             </div>
           ))}

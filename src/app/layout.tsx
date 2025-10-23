@@ -2,6 +2,7 @@
 
 import { Roboto, Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { SymbolProvider } from "@/context/SymbolContext";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -27,8 +28,10 @@ export default function RootLayout({
       <body
         className={`bg-[#181A20]  ${roboto.variable} ${beVietnamPro.variable} antialiased`}
       >
-        <Toaster position="bottom-right" />
-        {children}
+        <SymbolProvider>
+          <Toaster position="bottom-right" />
+          {children}
+        </SymbolProvider>
       </body>
     </html>
   );

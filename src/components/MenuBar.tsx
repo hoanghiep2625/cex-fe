@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function MenuBar() {
+export default function MenuBar({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const { user, loading, isAuthenticated, logout } = useAuth();
 
   return (
@@ -70,7 +76,7 @@ export default function MenuBar() {
 
         <div className="flex gap-4 justify-center items-center">
           <svg
-            className="bn-svg w-[24px] h-[24px] text-white text-PrimaryText hover:text-PrimaryYellow"
+            className="bn-svg w-6 h-6 text-white text-PrimaryText hover:text-PrimaryYellow"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -80,7 +86,7 @@ export default function MenuBar() {
             ></path>
           </svg>
           <svg
-            className="bn-svg w-[24px] h-[24px] text-white text-PrimaryText cursor-pointer mx-[5px] hover:text-PrimaryYellow"
+            className="bn-svg w-6 h-6 text-white text-PrimaryText cursor-pointer mx-[5px] hover:text-PrimaryYellow"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >

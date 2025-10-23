@@ -8,7 +8,13 @@ interface TradingViewWindow extends Window {
   };
 }
 
-export default function ChartPanel() {
+export default function ChartPanel({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"chart" | "info" | "trades">(
     "chart"
@@ -94,7 +100,7 @@ export default function ChartPanel() {
             Đồ thị
           </button>
           {activeTab === "chart" && (
-            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
           )}
         </div>
         <div className="relative inline-flex">
@@ -107,7 +113,7 @@ export default function ChartPanel() {
             Thông tin
           </button>
           {activeTab === "info" && (
-            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
           )}
         </div>
         <div className="relative inline-flex">
@@ -120,7 +126,7 @@ export default function ChartPanel() {
             Dữ liệu giao dịch
           </button>
           {activeTab === "trades" && (
-            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
           )}
         </div>
       </div>

@@ -31,7 +31,13 @@ const recentTrades: Trade[] = [
   { price: 108.35912, quantity: 0.00108, time: "09:37:13", type: "sell" },
 ];
 
-export default function RecentTrades() {
+export default function RecentTrades({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
 
   return (
@@ -48,7 +54,7 @@ export default function RecentTrades() {
             Thị trường giao dịch
           </button>
           {activeTab === "market" && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
           )}
         </div>
         <div className="relative inline-flex">
@@ -61,7 +67,7 @@ export default function RecentTrades() {
             Giao dịch của tôi
           </button>
           {activeTab === "user" && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[16px] h-[3px] bg-yellow-400" />
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
           )}
         </div>
         <button className="ml-auto text-gray-400 hover:text-gray-300 text-lg">
@@ -83,7 +89,7 @@ export default function RecentTrades() {
           {recentTrades.map((trade, index) => (
             <div
               key={index}
-              className="px-4 py-[2px] flex justify-between gap-2 text-xs hover:bg-[#1F2329] transition"
+              className="px-4 py-0.5 flex justify-between gap-2 text-xs hover:bg-[#1F2329] transition"
             >
               <div
                 className={`font-semibold text-xs ${
