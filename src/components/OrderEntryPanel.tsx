@@ -74,7 +74,7 @@ export default function OrderEntryPanel({
       fetchBalance(); // Refresh balance
     } catch (error) {
       const errorMsg =
-        (error as any)?.response?.data?.message || "Lỗi khi đặt lệnh mua";
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Lỗi khi đặt lệnh mua";
       toast.error(`❌ ${errorMsg}`);
       console.error("Error placing buy order:", error);
     } finally {
@@ -113,7 +113,7 @@ export default function OrderEntryPanel({
       fetchBalance(); // Refresh balance
     } catch (error) {
       const errorMsg =
-        (error as any)?.response?.data?.message || "Lỗi khi đặt lệnh bán";
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Lỗi khi đặt lệnh bán";
       toast.error(`❌ ${errorMsg}`);
       console.error("Error placing sell order:", error);
     } finally {

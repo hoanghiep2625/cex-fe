@@ -19,7 +19,7 @@ export default function OrderBook({
   const [grouping, setGrouping] = useState("0.01");
   const [viewType, setViewType] = useState(0);
   const { symbol } = useSymbol();
-  const { orderBook, loading, connected, error } = useOrderBook(
+  const { orderBook, connected, error } = useOrderBook(
     symbol?.code || "BTCUSDT"
   );
 
@@ -31,11 +31,11 @@ export default function OrderBook({
   };
 
   const totalBids = displayData.bids.reduce(
-    (sum: number, bid: any) => sum + bid.quantity,
+    (sum: number, bid: { price: number; quantity: number; total: number }) => sum + bid.quantity,
     0
   );
   const totalAsks = displayData.asks.reduce(
-    (sum: number, ask: any) => sum + ask.quantity,
+    (sum: number, ask: { price: number; quantity: number; total: number }) => sum + ask.quantity,
     0
   );
   const buyPercent = (totalBids / (totalBids + totalAsks)) * 100;
@@ -106,7 +106,7 @@ export default function OrderBook({
 
         {/* Asks */}
         <div>
-          {displayData.asks.map((ask: any, idx: number) => (
+          {displayData.asks.map((ask: { price: number; quantity: number; total: number }, idx: number) => (
             <div
               key={`ask-${idx}`}
               className="px-4 py-1 text-xs hover:bg-gray-800/50 grid grid-cols-3 gap-4 relative"
@@ -140,7 +140,7 @@ export default function OrderBook({
 
         {/* Bids */}
         <div>
-          {displayData.bids.map((bid: any, idx: number) => (
+          {displayData.bids.map((bid: { price: number; quantity: number; total: number }, idx: number) => (
             <div
               key={`bid-${idx}`}
               className="px-4 py-1 text-xs hover:bg-gray-800/50 grid grid-cols-3 gap-4 relative"

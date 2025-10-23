@@ -6,16 +6,27 @@ export interface OrderBookData {
   currentPrice: number;
 }
 
+interface OrderBookLevel {
+  price: string;
+  quantity: string;
+}
+
+interface WebSocketMessage {
+  type: string;
+  symbol?: string;
+  data?: {
+    asks: OrderBookLevel[];
+    bids: OrderBookLevel[];
+  };
+}
+
 // Simple hash function to detect data changes
-const hashOrderBook = (data: any): string => {
+const hashOrderBook = (data: OrderBookLevel[] | undefined): string => {
   if (!data) return "";
-  const asks = (data.asks || [])
-    .map((a: any) => `${a.price}:${a.quantity}`)
+  const asks = (data || [])
+    .map((a: OrderBookLevel) => `${a.price}:${a.quantity}`)
     .join("|");
-  const bids = (data.bids || [])
-    .map((b: any) => `${b.price}:${b.quantity}`)
-    .join("|");
-  return `${asks}|${bids}`;
+  return asks;
 };
 
 export const useOrderBook = (symbol: string = "BTCUSDT") => {
@@ -50,9 +61,9 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
         );
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = (event: MessageEvent<string>) => {
         try {
-          const message = JSON.parse(event.data);
+          const message: WebSocketMessage = JSON.parse(event.data);
 
           if (message.type === "subscribed") {
             console.log(`✅ Subscribed to ${message.symbol}`);
@@ -62,7 +73,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
 
           if (message.type === "update" && message.data) {
             const data = message.data;
-            const currentHash = hashOrderBook(data);
+            const currentHash = hashOrderBook(data.asks) + hashOrderBook(data.bids);
 
             // Only update if data actually changed
             if (currentHash === lastHashRef.current) {
@@ -73,7 +84,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
             console.log(`📊 Order book CHANGED for ${symbol}`);
 
             // Format: { asks: [{price: string, quantity: string}, ...], bids: [{price: string, quantity: string}, ...] }
-            const asks = (data.asks || []).map((item: any) => {
+            const asks = (data.asks || []).map((item: OrderBookLevel) => {
               const price = parseFloat(item.price);
               const quantity = parseFloat(item.quantity);
               return {
@@ -83,7 +94,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
               };
             });
 
-            const bids = (data.bids || []).map((item: any) => {
+            const bids = (data.bids || []).map((item: OrderBookLevel) => {
               const price = parseFloat(item.price);
               const quantity = parseFloat(item.quantity);
               return {
@@ -98,8 +109,8 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
               bids.length > 0
                 ? bids[0].price
                 : asks.length > 0
-                ? asks[asks.length - 1].price
-                : 0;
+                  ? asks[asks.length - 1].price
+                  : 0;
 
             setOrderBook({
               asks,

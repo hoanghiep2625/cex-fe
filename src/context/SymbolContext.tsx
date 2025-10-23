@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   ReactNode,
   useCallback,
 } from "react";
@@ -58,9 +57,9 @@ export const SymbolProvider = ({ children }: { children: ReactNode }) => {
         setSymbol(data);
         console.log(`✅ Symbol ${symbolCode}/${type} fetched:`, data);
       } catch (err) {
-        const error = err as unknown;
+        const error = err as { response?: { data?: { message?: string } } } | undefined;
         const errorMsg =
-          (error as any)?.response?.data?.message || "Failed to fetch symbol";
+          error?.response?.data?.message || "Failed to fetch symbol";
         setError(errorMsg);
         console.error(`❌ Error fetching symbol ${code}/${type}:`, err);
       } finally {
