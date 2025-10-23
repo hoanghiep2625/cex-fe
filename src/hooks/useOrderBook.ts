@@ -6,6 +6,18 @@ export interface OrderBookData {
   currentPrice: number;
 }
 
+interface BackendLevel {
+  price: string;
+  quantity: string;
+}
+
+interface BackendOrderBook {
+  symbol: string;
+  bids: BackendLevel[];
+  asks: BackendLevel[];
+  timestamp: number;
+}
+
 export const useOrderBook = (symbol: string = "BTCUSDT") => {
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,26 +27,24 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
   const hashRef = useRef("");
 
   useEffect(() => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl =
       process.env.NEXT_PUBLIC_WS_URL ||
-      (window.location.hostname === "localhost"
-        ? `${protocol}://localhost:8080`
-        : `${protocol}//${window.location.host}`);
+      `${protocol}://${window.location.host}/ws?symbol=${symbol}`;
 
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       setConnected(true);
       setLoading(false);
-      ws.send(JSON.stringify({ type: "subscribe", symbol }));
+      ws.send(JSON.stringify({ symbol }));
     };
 
     ws.onmessage = ({ data }: MessageEvent) => {
-      const msg = JSON.parse(data);
-      if (msg.type === "update" && msg.data) {
-        const { asks, bids } = msg.data;
-        const hash = JSON.stringify([asks, bids]);
+      const msg: { symbol: string; orderBook: BackendOrderBook } =
+        JSON.parse(data);
+      if (msg.orderBook) {
+        const hash = JSON.stringify([msg.orderBook.asks, msg.orderBook.bids]);
         if (hash === hashRef.current) return;
         hashRef.current = hash;
 
@@ -49,6 +59,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
           total: +p.price * +p.quantity,
         });
 
+        const { asks, bids } = msg.orderBook;
         setOrderBook({
           asks: asks.map(parseLevel),
           bids: bids.map(parseLevel),
@@ -68,7 +79,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
 
     return () => {
       try {
-        ws.send(JSON.stringify({ type: "unsubscribe", symbol }));
+        ws.send(JSON.stringify({ symbol, unsubscribe: true }));
       } catch {}
       ws.close();
     };
