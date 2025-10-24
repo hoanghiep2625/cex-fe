@@ -64,7 +64,7 @@ export default function ChartPanel({
           timezone: "Etc/UTC",
           theme: "dark",
           style: "1",
-          locale: "en",
+          locale: "vi",
           enable_publishing: false,
           allow_symbol_change: true,
           container_id: "tradingview-chart",

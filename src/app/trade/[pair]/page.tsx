@@ -30,7 +30,7 @@ export default function TradePage() {
   }, [pair, type, fetchSymbol]);
 
   return (
-    <div className="bg-[#0B0E11]">
+    <div>
       <MenuBar pair={pair} type={type} />
       <div className="flex min-h-[900px] gap-1 mt-1 mx-1">
         {/* <div className="bg-red-500 w-full h-15"></div> */}

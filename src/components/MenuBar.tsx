@@ -1,8 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import { Bolt, BookType, Search, LogOut } from "lucide-react";
 
 export default function MenuBar({
   pair,
@@ -39,8 +40,7 @@ export default function MenuBar({
         </ul>
       </div>
       <div className="flex gap-4 justify-center items-center">
-        <Image src="/search-outline.svg" alt="Search" width={25} height={25} />
-
+        <Search className="text-white w-6 h-6" strokeWidth={1.7} />
         {loading ? (
           // Đang check auth
           <div className="text-gray-400 text-sm">Đang kiểm tra...</div>
@@ -54,9 +54,10 @@ export default function MenuBar({
             </div>
             <button
               onClick={logout}
-              className="text-white bg-[#E63946] hover:bg-[#d62828] px-3 py-[5px] rounded-md text-sm transition"
+              title="Đăng xuất"
+              className="text-white cursor-pointer"
             >
-              Đăng xuất
+              <LogOut width={24} height={24} strokeWidth={1.5} />
             </button>
           </>
         ) : (
@@ -75,30 +76,15 @@ export default function MenuBar({
         )}
 
         <div className="flex gap-4 justify-center items-center">
-          <svg
-            className="bn-svg w-6 h-6 text-white text-PrimaryText hover:text-PrimaryYellow"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M19.5 1.8c.828 0 1.5.616 1.5 1.374v17.652c0 .758-.672 1.374-1.5 1.374H7.179C4.87 22.2 3 20.487 3 18.375V5.625C3 3.513 4.871 1.8 7.179 1.8H19.5zM7.4 18.5a2.1 2.1 0 00-1.91 1.23c.411.43 1.014.704 1.689.704H19.07V18.5H7.4zM7.18 3.566c-1.243 0-2.25.922-2.25 2.059v11.96a3.883 3.883 0 012.471-.886h11.67V3.566H7.18zm4.716 9.574a1 1 0 01.996 1.005 1 1 0 01-.995 1.005 1 1 0 01-.996-1.005 1 1 0 01.995-1.005zM11.9 5.4c1.622 0 2.9 1.388 2.9 2.9 0 1.266-.935 2.348-2 2.736v.765a.901.901 0 01-1.8 0v-.917c0-.856.677-1.359 1.173-1.533.477-.168.827-.657.827-1.05 0-.559-.512-1.1-1.1-1.1-.207 0-.49.113-.738.362-.248.248-.361.53-.361.738A.901.901 0 019 8.3c0-.793.388-1.51.889-2.012.5-.501 1.219-.889 2.011-.889z"
-              fill="currentColor"
-            ></path>
-          </svg>
-          <svg
-            className="bn-svg w-6 h-6 text-white text-PrimaryText cursor-pointer mx-[5px] hover:text-PrimaryYellow"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M5.14 8.04v7.92L12 19.92l6.86-3.96V8.04L12 4.077 5.14 8.04zm15.52 8.094l-.012.199a1.5 1.5 0 01-.738 1.1l-7.16 4.134-.179.088c-.365.15-.777.15-1.142 0l-.179-.088-7.16-4.134a1.5 1.5 0 01-.737-1.1l-.013-.2V7.867a1.5 1.5 0 01.75-1.299l7.16-4.134a1.5 1.5 0 011.5 0l7.16 4.134a1.5 1.5 0 01.75 1.3v8.267z"
-              fill="currentColor"
-            ></path>
-            <path
-              d="M12 8.82l3.182 3.182L12 15.184l-3.182-3.182L12 8.82z"
-              fill="currentColor"
-            ></path>
-          </svg>
+          <ThemeToggle className="w-6 h-6" />
+          <BookType
+            strokeWidth={1.7}
+            className="text-white w-6 h-6 cursor-pointer"
+          />
+          <Bolt
+            strokeWidth={1.7}
+            className="text-white w-6 h-6 cursor-pointer"
+          />
         </div>
       </div>
     </div>
