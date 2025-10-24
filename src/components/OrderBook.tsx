@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useOrderBook } from "@/hooks/useOrderBook";
 import { useSymbol } from "@/context/SymbolContext";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
@@ -111,13 +112,7 @@ export default function OrderBook({
           </span>
         </div>
       </div>
-      <div className="text-xs ml-2 absolute right-1 top-0">
-        {connected ? (
-          <span className="text-green-400">●</span>
-        ) : (
-          <span className="text-red-400">●</span>
-        )}
-      </div>
+      <ConnectionStatus connected={connected} />
     </div>
   );
 }

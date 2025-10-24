@@ -8,6 +8,8 @@ import toast from "react-hot-toast";
 import { CircleAlert, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import TabUnderline from "@/components/ui/TabUnderline";
+import NumberInput from "@/components/ui/NumberInput";
 
 export default function OrderEntryPanel({
   pair,
@@ -25,7 +27,7 @@ export default function OrderEntryPanel({
   const { user, loading, isAuthenticated } = useAuth();
   const { balances, balanceLoading, fetchBalance } = useBalance();
   const { symbol } = useSymbol();
-
+  const [activeTab, setActiveTab] = useState("spot");
   // Buy form state
   const [buyPrice, setBuyPrice] = useState("");
   const [buyQty, setBuyQty] = useState("");
@@ -144,58 +146,34 @@ export default function OrderEntryPanel({
       <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col">
         {/* Account Type Tabs */}
         <div className="px-4 pt-3 border-b border-gray-700 flex items-center gap-6">
-          <div className="relative inline-flex">
-            <button
-              onClick={() => setAccountType("spot")}
-              className={`pb-2 text-[12px] font-semibold ${
-                accountType === "spot" ? "text-white" : "text-gray-400"
-              }`}
-            >
-              Spot
-            </button>
-            {accountType === "spot" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-            )}
-          </div>
-          <div className="relative inline-flex">
-            <button
-              onClick={() => setAccountType("cross")}
-              className={`pb-2 text-[12px] font-semibold ${
-                accountType === "cross" ? "text-white" : "text-gray-400"
-              }`}
-            >
-              Cross Margin
-            </button>
-            {accountType === "cross" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-            )}
-          </div>
-          <div className="relative inline-flex">
-            <button
-              onClick={() => setAccountType("isolated")}
-              className={`pb-2 text-[12px] font-semibold ${
-                accountType === "isolated" ? "text-white" : "text-gray-400"
-              }`}
-            >
-              Isolated
-            </button>
-            {accountType === "isolated" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-            )}
-          </div>
-          <div className="relative inline-flex">
-            <button
-              onClick={() => setAccountType("luoi")}
-              className={`pb-2 text-[12px] font-semibold ${
-                accountType === "luoi" ? "text-white" : "text-gray-400"
-              }`}
-            >
-              Lưới
-            </button>
-            {accountType === "luoi" && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-            )}
-          </div>
+          <TabUnderline
+            className="text-xs font-semibold pb-2"
+            active={activeTab === "spot"}
+            onClick={() => setActiveTab("spot")}
+          >
+            Spot
+          </TabUnderline>
+          <TabUnderline
+            className="text-xs font-semibold pb-2"
+            active={activeTab === "cross"}
+            onClick={() => setActiveTab("cross")}
+          >
+            Cross Margin
+          </TabUnderline>
+          <TabUnderline
+            className="text-xs font-semibold pb-2"
+            active={activeTab === "isolated"}
+            onClick={() => setActiveTab("isolated")}
+          >
+            Isolated
+          </TabUnderline>
+          <TabUnderline
+            className="text-xs font-semibold pb-2"
+            active={activeTab === "luoi"}
+            onClick={() => setActiveTab("luoi")}
+          >
+            Lưới
+          </TabUnderline>
         </div>
 
         {/* Order Type Selection */}
@@ -235,90 +213,35 @@ export default function OrderEntryPanel({
           {/* BUY FORM */}
           <div className="space-y-3">
             {/* Giá */}
-            <div className="flex">
-              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
-                <div className="text-xs text-gray-400 font-semibold">Giá</div>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={buyPrice}
-                      onChange={(e) => setBuyPrice(e.target.value)}
-                      placeholder="0"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
-                    />
-                  </div>
-                  <div className="text-sm text-white font-semibold">
-                    {quoteCurrency}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▲
-                </button>
-                <hr className="w-full border-gray-700" />
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▼
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              label="Giá"
+              value={buyPrice}
+              onChange={setBuyPrice}
+              unit={quoteCurrency}
+              showButtons={true}
+            />
 
-            <div className="flex">
-              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
-                <div className="text-xs text-gray-400 font-semibold">
-                  Số lượng
-                </div>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={buyQty}
-                      onChange={(e) => setBuyQty(e.target.value)}
-                      placeholder="0"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
-                    />
-                  </div>
-                  <div className="text-sm text-white font-semibold">
-                    {baseCurrency}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▲
-                </button>
-                <hr className="w-full border-gray-700" />
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▼
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              label="Số lượng"
+              value={buyQty}
+              onChange={setBuyQty}
+              unit={baseCurrency}
+              showButtons={true}
+            />
 
             {/* Slider */}
             <div className="">
               <input type="range" className="w-full h-0.5 " />
             </div>
 
-            <div className="flex">
-              <div className="border border-gray-700 rounded-md w-full p-2 flex justify-between items-center">
-                <div className="text-xs text-gray-400 font-semibold">Tổng</div>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={buyTotal}
-                      readOnly
-                      placeholder="0"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
-                    />
-                  </div>
-                  <div className="text-sm text-white font-semibold">
-                    {quoteCurrency}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <NumberInput
+              label="Tổng"
+              value={buyTotal}
+              onChange={() => {}}
+              unit={quoteCurrency}
+              readOnly={true}
+              showButtons={false}
+            />
 
             {/* Available - BUY */}
             <div className="text-xs space-y-1">
@@ -367,90 +290,35 @@ export default function OrderEntryPanel({
 
           {/* SELL FORM */}
           <div className="space-y-3">
-            <div className="flex">
-              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
-                <div className="text-xs text-gray-400 font-semibold">Giá</div>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={sellPrice}
-                      onChange={(e) => setSellPrice(e.target.value)}
-                      placeholder="0"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
-                    />
-                  </div>
-                  <div className="text-sm text-white font-semibold">
-                    {quoteCurrency}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▲
-                </button>
-                <hr className="w-full border-gray-700" />
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▼
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              label="Giá"
+              value={sellPrice}
+              onChange={setSellPrice}
+              unit={quoteCurrency}
+              showButtons={true}
+            />
 
-            <div className="flex">
-              <div className="border border-gray-700 rounded-md rounded-r-none w-full p-2 flex justify-between items-center">
-                <div className="text-xs text-gray-400 font-semibold">
-                  Số lượng
-                </div>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={sellQty}
-                      onChange={(e) => setSellQty(e.target.value)}
-                      placeholder="0"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold bg-transparent placeholder-gray-600"
-                    />
-                  </div>
-                  <div className="text-sm text-white font-semibold">
-                    {baseCurrency}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 border-gray-700 rounded-r-md">
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▲
-                </button>
-                <hr className="w-full border-gray-700" />
-                <button className="text-[8px] text-gray-400 hover:text-white leading-none">
-                  ▼
-                </button>
-              </div>
-            </div>
+            <NumberInput
+              label="Số lượng"
+              value={sellQty}
+              onChange={setSellQty}
+              unit={baseCurrency}
+              showButtons={true}
+            />
 
             {/* Slider */}
             <div className="">
               <input type="range" className="w-full h-0.5 " />
             </div>
 
-            <div className="flex">
-              <div className="border border-gray-700 rounded-md w-full p-2 flex justify-between items-center">
-                <div className="text-xs text-gray-400 font-semibold">Tổng</div>
-                <div className="flex items-center gap-1 flex-1 justify-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={sellTotal}
-                      readOnly
-                      placeholder="0"
-                      className="w-full outline-none text-sm text-right items-center flex text-white font-semibold"
-                    />
-                  </div>
-                  <div className="text-sm text-white font-semibold">
-                    {quoteCurrency}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <NumberInput
+              label="Tổng"
+              value={sellTotal}
+              onChange={() => {}}
+              unit={quoteCurrency}
+              readOnly={true}
+              showButtons={false}
+            />
 
             {/* Available - SELL */}
             <div className="text-xs space-y-1">

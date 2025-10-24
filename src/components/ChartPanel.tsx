@@ -1,5 +1,6 @@
 "use client";
 
+import TabUnderline from "@/components/ui/TabUnderline";
 import { useRef, useState, useEffect } from "react";
 
 interface TradingViewWindow extends Window {
@@ -20,7 +21,7 @@ export default function ChartPanel({
     "chart"
   );
   const [chartType, setChartType] = useState<"goc" | "tradingview" | "chitiet">(
-    "goc"
+    "tradingview"
   );
   const [timeframe, setTimeframe] = useState("D");
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -90,45 +91,27 @@ export default function ChartPanel({
   return (
     <div className="flex-2 bg-[#181A20] rounded-[10px] flex flex-col">
       <div className="bg-[#181A20] h-[50px] rounded-t-[10px] border-b border-b-gray-700 px-4 flex items-center gap-6">
-        <div className="relative inline-flex">
-          <button
-            onClick={() => setActiveTab("chart")}
-            className={`text-[13px] font-semibold ${
-              activeTab === "chart" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Đồ thị
-          </button>
-          {activeTab === "chart" && (
-            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-          )}
-        </div>
-        <div className="relative inline-flex">
-          <button
-            onClick={() => setActiveTab("info")}
-            className={`text-[13px] font-semibold ${
-              activeTab === "info" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Thông tin
-          </button>
-          {activeTab === "info" && (
-            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-          )}
-        </div>
-        <div className="relative inline-flex">
-          <button
-            onClick={() => setActiveTab("trades")}
-            className={`text-[13px] font-semibold ${
-              activeTab === "trades" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Dữ liệu giao dịch
-          </button>
-          {activeTab === "trades" && (
-            <div className="absolute bottom-[-15px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-          )}
-        </div>
+        <TabUnderline
+          className="text-[13px] font-semibold pb-4 pt-4"
+          active={activeTab === "chart"}
+          onClick={() => setActiveTab("chart")}
+        >
+          Đồ thị
+        </TabUnderline>
+        <TabUnderline
+          className="text-[13px] font-semibold pb-4 pt-4"
+          active={activeTab === "info"}
+          onClick={() => setActiveTab("info")}
+        >
+          Thông tin
+        </TabUnderline>
+        <TabUnderline
+          className="text-[13px] font-semibold pb-4 pt-4"
+          active={activeTab === "trades"}
+          onClick={() => setActiveTab("trades")}
+        >
+          Dữ liệu giao dịch
+        </TabUnderline>
       </div>
       {activeTab === "chart" && (
         <div className="bg-[#181A20] flex-1 rounded-b-[10px] flex flex-col">

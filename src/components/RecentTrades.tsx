@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
+import TabUnderline from "./ui/TabUnderline";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 interface Trade {
   price: string;
@@ -52,43 +54,25 @@ export default function RecentTrades({
     <div className="h-[50%] bg-[#181A20] rounded-[10px] text-white flex flex-col overflow-hidden">
       {/* Tabs */}
       <div className=" relative px-4 pt-3 border-b border-gray-700 flex items-center gap-4">
-        <div className="relative inline-flex">
-          <button
-            onClick={() => setActiveTab("market")}
-            className={`pb-2 text-[12px] font-semibold ${
-              activeTab === "market" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Thị trường giao dịch
-          </button>
-          {activeTab === "market" && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-          )}
-        </div>
-        <div className="relative inline-flex">
-          <button
-            onClick={() => setActiveTab("user")}
-            className={`pb-2 text-[12px] font-semibold ${
-              activeTab === "user" ? "text-white" : "text-gray-400"
-            }`}
-          >
-            Giao dịch của tôi
-          </button>
-          {activeTab === "user" && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-          )}
-        </div>
+        <TabUnderline
+          className="text-xs font-semibold pb-3"
+          active={activeTab === "market"}
+          onClick={() => setActiveTab("market")}
+        >
+          Thị trường giao dịch
+        </TabUnderline>
+        <TabUnderline
+          className="text-xs font-semibold pb-3"
+          active={activeTab === "user"}
+          onClick={() => setActiveTab("user")}
+        >
+          Giao dịch của tôi
+        </TabUnderline>
         <button className="ml-auto text-gray-400 hover:text-gray-300 text-lg">
           ⋯
         </button>
         {/* Connection Status */}
-        <div className="text-xs ml-2 absolute right-1 top-0">
-          {connected ? (
-            <span className="text-green-400">●</span>
-          ) : (
-            <span className="text-red-400">●</span>
-          )}
-        </div>
+        <ConnectionStatus connected={connected} />
       </div>
 
       {/* Table Content */}

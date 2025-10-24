@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useMarketData } from "@/hooks/useMarketData";
 import { useSymbolInfo } from "@/hooks/useSymbolInfo";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 interface MarketData {
   symbol: string;
@@ -246,13 +247,7 @@ export default function MarketHeader({
           </div>
         )}
       </div>
-      <div className="text-xs ml-2 absolute right-1 top-0">
-        {connected ? (
-          <span className="text-green-400">●</span>
-        ) : (
-          <span className="text-red-400">●</span>
-        )}
-      </div>
+      <ConnectionStatus connected={connected} />
     </div>
   );
 }

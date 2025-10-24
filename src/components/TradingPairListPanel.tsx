@@ -111,66 +111,52 @@ export default function TradingPairListPanel({
 
         {/* Data Rows */}
         <div className="">
-          {loading ? (
-            <div className="px-4 py-8 text-center text-gray-400 text-sm">
-              Đang tải...
-            </div>
-          ) : error ? (
-            <div className="px-4 py-8 text-center text-red-400 text-sm">
-              Lỗi khi tải dữ liệu
-            </div>
-          ) : filteredPairs.length === 0 ? (
-            <div className="px-4 py-8 text-center text-gray-400 text-sm">
-              Không tìm thấy cặp giao dịch
-            </div>
-          ) : (
-            filteredPairs.map((p, index) => (
-              <Link
-                href={`/trade/${p.name.replace("/", "_")}?type=spot`}
-                key={index}
-              >
-                <div className="px-4 py-1 flex justify-between hover:bg-[#1F2329] transition text-xs items-center cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleFavorite(p.name);
-                      }}
-                      className="text-gray-500 hover:text-yellow-500 transition"
-                    >
-                      <Star
-                        width={14}
-                        height={14}
-                        fill={favorites.has(p.name) ? "currentColor" : "none"}
-                      />
-                    </button>
-                    <div className="flex">
-                      <div className="font-semibold text-white">{p.name}</div>
-                      <div className="text-xs text-white bg-gray-700 px-1 ml-1">
-                        {p.leverage}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-8">
-                    <div className="font-semibold text-white text-right">
-                      {p.price.toLocaleString("en-US", {
-                        minimumFractionDigits: 4,
-                        maximumFractionDigits: 4,
-                      })}
-                    </div>
-                    <div
-                      className={`font-semibold w-14 text-right ${
-                        p.change > 0 ? "text-green-400" : "text-red-400"
-                      }`}
-                    >
-                      {p.change > 0 ? "+" : ""}
-                      {p.change.toFixed(2)}%
+          {filteredPairs.map((p, index) => (
+            <Link
+              href={`/trade/${p.name.replace("/", "_")}?type=spot`}
+              key={index}
+            >
+              <div className="px-4 py-1 flex justify-between hover:bg-[#1F2329] transition text-xs items-center cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleFavorite(p.name);
+                    }}
+                    className="text-gray-500 hover:text-yellow-500 transition"
+                  >
+                    <Star
+                      width={14}
+                      height={14}
+                      fill={favorites.has(p.name) ? "currentColor" : "none"}
+                    />
+                  </button>
+                  <div className="flex">
+                    <div className="font-semibold text-white">{p.name}</div>
+                    <div className="text-xs text-white bg-gray-700 px-1 ml-1">
+                      {p.leverage}
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))
-          )}
+                <div className="flex gap-8">
+                  <div className="font-semibold text-white text-right">
+                    {p.price.toLocaleString("en-US", {
+                      minimumFractionDigits: 4,
+                      maximumFractionDigits: 4,
+                    })}
+                  </div>
+                  <div
+                    className={`font-semibold w-14 text-right ${
+                      p.change > 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {p.change > 0 ? "+" : ""}
+                    {p.change.toFixed(2)}%
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
