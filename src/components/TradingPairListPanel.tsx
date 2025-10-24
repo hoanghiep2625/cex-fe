@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Star } from "lucide-react";
+import { ChevronRight, Search, Star } from "lucide-react";
+import { useSymbols } from "@/hooks/useSymbols";
+import Link from "next/link";
 
 interface TradingPair {
   name: string;
@@ -9,22 +11,6 @@ interface TradingPair {
   price: number;
   change: number;
 }
-
-const tradingPairs: TradingPair[] = [
-  { name: "AEUR/USDT", leverage: "5x", price: 1.0627, change: 2.12 },
-  { name: "AEVO/USDT", leverage: "5x", price: 0.0636, change: -3.05 },
-  { name: "AGLD/USDT", leverage: "5x", price: 0.409, change: -0.24 },
-  { name: "AI/USDT", leverage: "5x", price: 0.0744, change: -3.63 },
-  { name: "AIXBT/USDT", leverage: "5x", price: 0.0563, change: -5.06 },
-  { name: "ALCX/USDT", leverage: "5x", price: 8.18, change: -2.85 },
-  { name: "ALGO/USDT", leverage: "5x", price: 0.181, change: -1.15 },
-  { name: "ALICE/USDT", leverage: "5x", price: 0.3223, change: -7.54 },
-  { name: "ALPINE/USDT", leverage: "5x", price: 0.826, change: -4.95 },
-  { name: "ALT/USDT", leverage: "5x", price: 0.01891, change: -2.93 },
-  { name: "AMP/USDT", leverage: "5x", price: 0.002399, change: -3.15 },
-  { name: "ANIME/USDT", leverage: "5x", price: 0.00939, change: 2.69 },
-  { name: "ANKR/USDT", leverage: "5x", price: 0.01031, change: -0.87 },
-];
 
 export default function TradingPairListPanel({
   pair,
@@ -37,8 +23,19 @@ export default function TradingPairListPanel({
   const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-  const filteredPairs = tradingPairs.filter((pair) =>
-    pair.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch symbols based on active tab (quote asset)
+  const { symbols, loading, error } = useSymbols(activeTab);
+
+  // Convert symbols to display format
+  const tradingPairs = symbols.map((sym) => ({
+    name: `${sym.base_asset}/${sym.quote_asset}`,
+    leverage: "5x",
+    price: Math.random() * 100, // Placeholder - would need market data
+    change: (Math.random() - 0.5) * 10, // Placeholder
+  }));
+
+  const filteredPairs = tradingPairs.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleFavorite = (name: string) => {
@@ -69,27 +66,29 @@ export default function TradingPairListPanel({
         </div>
 
         {/* Tabs */}
-        <div className="flex px-4 gap-6 overflow-x-auto scrollbar-hide border-b border-gray-700">
-          {tabs.map((tab) => (
-            <div key={tab} className="relative inline-flex">
-              <button
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 text-xs font-semibold transition ${
-                  activeTab === tab
-                    ? "text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                {tab}
-              </button>
-              {activeTab === tab && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
-              )}
-            </div>
-          ))}
-          <button className="text-gray-400 hover:text-gray-300 transition">
-            &gt;
-          </button>
+        <div className="flex px-4 gap-6 overflow-x-auto scrollbar-hide border-b border-gray-700 items-center justify-center">
+          <div className="mb-2 flex justify-center gap-6 items-center">
+            {tabs.map((tab) => (
+              <div key={tab} className="relative inline-flex ">
+                <button
+                  onClick={() => setActiveTab(tab)}
+                  className={` text-xs font-semibold transition ${
+                    activeTab === tab
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {tab}
+                </button>
+                {activeTab === tab && (
+                  <div className="absolute bottom-[-8px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
+                )}
+              </div>
+            ))}
+            <button className="text-gray-400 flex hover:text-gray-300 transition">
+              <ChevronRight width={16} height={16} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -112,47 +111,66 @@ export default function TradingPairListPanel({
 
         {/* Data Rows */}
         <div className="">
-          {filteredPairs.map((pair, index) => (
-            <div
-              key={index}
-              className="px-4 py-1 flex justify-between hover:bg-[#1F2329] transition text-xs items-center"
-            >
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => toggleFavorite(pair.name)}
-                  className="text-gray-500 hover:text-yellow-500 transition"
-                >
-                  <Star
-                    width={14}
-                    height={14}
-                    fill={favorites.has(pair.name) ? "currentColor" : "none"}
-                  />
-                </button>
-                <div className="flex">
-                  <div className="font-semibold text-white">{pair.name}</div>
-                  <div className="text-xs text-white bg-gray-700 px-1 ml-1">
-                    {pair.leverage}
+          {loading ? (
+            <div className="px-4 py-8 text-center text-gray-400 text-sm">
+              Đang tải...
+            </div>
+          ) : error ? (
+            <div className="px-4 py-8 text-center text-red-400 text-sm">
+              Lỗi khi tải dữ liệu
+            </div>
+          ) : filteredPairs.length === 0 ? (
+            <div className="px-4 py-8 text-center text-gray-400 text-sm">
+              Không tìm thấy cặp giao dịch
+            </div>
+          ) : (
+            filteredPairs.map((p, index) => (
+              <Link
+                href={`/trade/${p.name.replace("/", "_")}?type=spot`}
+                key={index}
+              >
+                <div className="px-4 py-1 flex justify-between hover:bg-[#1F2329] transition text-xs items-center cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleFavorite(p.name);
+                      }}
+                      className="text-gray-500 hover:text-yellow-500 transition"
+                    >
+                      <Star
+                        width={14}
+                        height={14}
+                        fill={favorites.has(p.name) ? "currentColor" : "none"}
+                      />
+                    </button>
+                    <div className="flex">
+                      <div className="font-semibold text-white">{p.name}</div>
+                      <div className="text-xs text-white bg-gray-700 px-1 ml-1">
+                        {p.leverage}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-8">
+                    <div className="font-semibold text-white text-right">
+                      {p.price.toLocaleString("en-US", {
+                        minimumFractionDigits: 4,
+                        maximumFractionDigits: 4,
+                      })}
+                    </div>
+                    <div
+                      className={`font-semibold w-14 text-right ${
+                        p.change > 0 ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      {p.change > 0 ? "+" : ""}
+                      {p.change.toFixed(2)}%
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex gap-8">
-                <div className="font-semibold text-white text-right">
-                  {pair.price.toLocaleString("en-US", {
-                    minimumFractionDigits: 4,
-                    maximumFractionDigits: 4,
-                  })}
-                </div>
-                <div
-                  className={`font-semibold w-14 text-right ${
-                    pair.change > 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {pair.change > 0 ? "+" : ""}
-                  {pair.change.toFixed(2)}%
-                </div>
-              </div>
-            </div>
-          ))}
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </div>

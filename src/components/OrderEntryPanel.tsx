@@ -63,8 +63,9 @@ export default function OrderEntryPanel({
     try {
       setBuyLoading(true);
 
+      const symbolCode = symbol?.code || pair.replace("_", "");
       const orderData = {
-        symbol: symbol?.code || "BTCUSDT",
+        symbol: symbolCode,
         side: "BUY",
         type: orderType === "limit" ? "LIMIT" : orderType.toUpperCase(),
         price: buyPrice,
@@ -101,8 +102,9 @@ export default function OrderEntryPanel({
     try {
       setSellLoading(true);
 
+      const symbolCode = symbol?.code || pair.replace("_", "");
       const orderData = {
-        symbol: symbol?.code || "BTCUSDT",
+        symbol: symbolCode,
         side: "SELL",
         type: orderType === "limit" ? "LIMIT" : orderType.toUpperCase(),
         price: sellPrice,
@@ -129,9 +131,8 @@ export default function OrderEntryPanel({
     }
   };
 
-  // Get base and quote currency from symbol context
-  const baseCurrency = symbol?.baseAsset || "BTC";
-  const quoteCurrency = symbol?.quoteAsset || "USDT";
+  // Get base and quote currency from pair prop (BTC_USDT → BTC, USDT)
+  const [baseCurrency, quoteCurrency] = pair.split("_");
   // Get balances for the current trading pair
   const baseAssetBalance =
     balances.find((b) => b.currency === baseCurrency)?.available || "0";

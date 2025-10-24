@@ -106,7 +106,7 @@ export default function MarketHeader({
                 </span>
               </div>
               <span className="text-gray-400 text-xs">
-                {marketData?.name || "Market Price"}
+                Giá {marketData?.name || "Market Price"}
               </span>
             </div>
           </div>

@@ -37,7 +37,7 @@ export default function TradePage() {
         <div className="flex-6 gap-1 flex flex-col">
           <MarketHeader pair={pair} type={type} />
           <div className="flex-1 flex gap-1">
-            <OrderBook />
+            <OrderBook pair={pair} type={type} />
             <div className="flex-[2.5] flex flex-col gap-1">
               <ChartPanel pair={pair} type={type} />
               <OrderEntryPanel pair={pair} type={type} />

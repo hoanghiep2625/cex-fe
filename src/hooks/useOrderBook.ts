@@ -18,7 +18,7 @@ interface BackendOrderBook {
   timestamp: number;
 }
 
-export const useOrderBook = (symbol: string = "BTCUSDT") => {
+export const useOrderBook = (symbol: string = "BTCUSDT", type: string = "spot") => {
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT") => {
 
     const baseUrl =
       process.env.NEXT_PUBLIC_WS_URL || `${protocol}://api-cex.tahoanghiep.com`;
-    const wsUrl = `${baseUrl}/ws?symbol=${symbol}`;
+    const wsUrl = `${baseUrl}/ws?symbol=${symbol}&type=${type}`;
 
     const ws = new WebSocket(wsUrl);
 

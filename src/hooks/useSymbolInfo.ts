@@ -25,11 +25,13 @@ export const useSymbolInfo = (symbol: string) => {
         setLoading(true);
         setError(null);
         const response = await axiosInstance.get(`/symbols/code/${symbol}`);
-        const data = response.data.data || response.data;
+        // Handle nested response structure: { statusCode, message, data: {...} }
+        const data = response.data?.data || response.data;
         setSymbolInfo(data);
       } catch (err) {
         console.error(`❌ Error fetching symbol info for ${symbol}:`, err);
         setError("Failed to fetch symbol info");
+        setSymbolInfo(null);
       } finally {
         setLoading(false);
       }

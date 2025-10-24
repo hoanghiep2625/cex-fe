@@ -6,11 +6,18 @@ import { useSymbol } from "@/context/SymbolContext";
 
 const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-export default function OrderBook() {
+export default function OrderBook({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const [grouping, setGrouping] = useState("0.01");
   const { symbol } = useSymbol();
   const { orderBook, connected, error } = useOrderBook(
-    symbol?.code || "BTCUSDT"
+    symbol?.code || pair.replace("_", ""),
+    type || "spot"
   );
 
   const { asks = [], bids = [], currentPrice = 0 } = orderBook || {};
