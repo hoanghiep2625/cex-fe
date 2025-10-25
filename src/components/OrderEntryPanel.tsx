@@ -143,9 +143,9 @@ export default function OrderEntryPanel({
 
   return (
     <>
-      <div className="flex-1 bg-[#181A20] rounded-[10px] text-white flex flex-col">
+      <div className="flex-1 dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col">
         {/* Account Type Tabs */}
-        <div className="px-4 pt-3 border-b border-gray-700 flex items-center gap-6">
+        <div className="px-4 pt-3 dark:border-b dark:border-gray-700 border-b border-gray-200 flex items-center gap-6">
           <TabUnderline
             className="text-xs font-semibold pb-2"
             active={activeTab === "spot"}
@@ -181,7 +181,9 @@ export default function OrderEntryPanel({
           <button
             onClick={() => setOrderType("limit")}
             className={`text-[12px] font-semibold ${
-              orderType === "limit" ? "text-white" : "text-gray-400"
+              orderType === "limit"
+                ? "dark:text-white text-black"
+                : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
             }`}
           >
             Giới hạn
@@ -189,7 +191,9 @@ export default function OrderEntryPanel({
           <button
             onClick={() => setOrderType("market")}
             className={`text-[12px] font-semibold ${
-              orderType === "market" ? "text-white" : "text-gray-400"
+              orderType === "market"
+                ? "dark:text-white text-black"
+                : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
             }`}
           >
             Thị trường
@@ -197,13 +201,15 @@ export default function OrderEntryPanel({
           <button
             onClick={() => setOrderType("stop")}
             className={`text-[12px] font-semibold flex items-center gap-1 ${
-              orderType === "stop" ? "text-white" : "text-gray-400"
+              orderType === "stop"
+                ? "dark:text-white text-black"
+                : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
             }`}
           >
             Stop Limit
             <span className="text-xs">▼</span>
           </button>
-          <button className="text-gray-400 hover:text-white ">
+          <button className="dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800">
             <CircleAlert width={16} height={16} />
           </button>
         </div>
@@ -241,12 +247,15 @@ export default function OrderEntryPanel({
               unit={quoteCurrency}
               readOnly={true}
               showButtons={false}
+              rounded="rounded-md"
             />
 
             {/* Available - BUY */}
             <div className="text-xs space-y-1">
-              <div className="flex justify-between text-white">
-                <span className="text-gray-500">Khả dụng</span>
+              <div className="flex justify-between dark:text-white text-black">
+                <span className="dark:text-gray-500 text-gray-400">
+                  Khả dụng
+                </span>
                 <div className="flex items-center gap-1">
                   <span>
                     {balanceLoading
@@ -255,12 +264,18 @@ export default function OrderEntryPanel({
                     {quoteCurrency}
                   </span>
                   <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
-                    <Plus width={12} height={12} />
+                    <Plus
+                      width={12}
+                      height={12}
+                      className="text-white dark:text-[#181A20]"
+                    />
                   </div>
                 </div>
               </div>
-              <div className="flex justify-between text-white">
-                <span className="underline text-gray-500">Mua tối đa</span>
+              <div className="flex justify-between dark:text-white text-black">
+                <span className="underline dark:text-gray-500 text-gray-400">
+                  Mua tối đa
+                </span>
                 <span>
                   {balanceLoading
                     ? "--"
@@ -318,12 +333,15 @@ export default function OrderEntryPanel({
               unit={quoteCurrency}
               readOnly={true}
               showButtons={false}
+              rounded="rounded-md"
             />
 
             {/* Available - SELL */}
             <div className="text-xs space-y-1">
-              <div className="flex justify-between text-white">
-                <span className="text-gray-500">Khả dụng</span>
+              <div className="flex justify-between dark:text-white text-black">
+                <span className="dark:text-gray-500 text-gray-400">
+                  Khả dụng
+                </span>
                 <span>
                   {balanceLoading
                     ? "-"
@@ -331,8 +349,10 @@ export default function OrderEntryPanel({
                   {baseCurrency}
                 </span>
               </div>
-              <div className="flex justify-between text-white">
-                <span className="underline text-gray-500">Bán tối đa</span>
+              <div className="flex justify-between dark:text-white text-black">
+                <span className="underline dark:text-gray-500 text-gray-400">
+                  Bán tối đa
+                </span>
                 <span>
                   {balanceLoading
                     ? "--"

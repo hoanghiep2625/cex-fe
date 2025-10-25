@@ -18,12 +18,20 @@ export default function CustomCheckbox({
       <button
         onClick={() => onChange(!checked)}
         className={`w-4 h-4 border rounded flex items-center justify-center transition shrink-0 ${
-          checked ? "bg-white border-white" : "bg-[#181A20] border-white"
+          checked
+            ? "dark:bg-white dark:border-white bg-black border-black"
+            : "dark:bg-[#181A20] dark:border-white bg-white border-gray-400"
         }`}
       >
-        {checked && <Check size={16} className="text-[#181A20]" />}
+        {checked && (
+          <Check size={16} className="dark:text-[#181A20] text-white" />
+        )}
       </button>
-      {label && <p className="text-white text-xs select-none">{label}</p>}
+      {label && (
+        <p className="dark:text-white text-black text-xs select-none">
+          {label}
+        </p>
+      )}
     </div>
   );
 }

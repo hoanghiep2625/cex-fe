@@ -25,6 +25,24 @@ export default function ChartPanel({
   );
   const [timeframe, setTimeframe] = useState("D");
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  // Detect dark mode
+  useEffect(() => {
+    const darkMode = document.documentElement.classList.contains("dark");
+    setIsDark(darkMode);
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Load TradingView Script
   useEffect(() => {
@@ -62,7 +80,7 @@ export default function ChartPanel({
           symbol: "BTCUSD",
           interval: timeframe,
           timezone: "Etc/UTC",
-          theme: "dark",
+          theme: isDark ? "dark" : "light",
           style: "1",
           locale: "vi",
           enable_publishing: false,
@@ -75,7 +93,7 @@ export default function ChartPanel({
           save_image: false,
           studies_overrides: {},
           overrides: {},
-          toolbar_bg: "#181A20",
+          toolbar_bg: isDark ? "#181A20" : "#ffffff",
           disabled_features: [
             "header_widget",
             "timeframes_toolbar",
@@ -85,12 +103,12 @@ export default function ChartPanel({
         });
       }
     }
-  }, [chartType, timeframe, scriptLoaded]);
+  }, [chartType, timeframe, scriptLoaded, isDark]);
 
   // Chart UI component
   return (
-    <div className="flex-2 bg-[#181A20] rounded-[10px] flex flex-col">
-      <div className="bg-[#181A20] h-[50px] rounded-t-[10px] border-b border-b-gray-700 px-4 flex items-center gap-6">
+    <div className="flex-2 dark:bg-[#181A20] bg-white rounded-[10px] flex flex-col">
+      <div className="dark:bg-[#181A20] bg-white h-[50px] rounded-t-[10px] border-b dark:border-b-gray-700 border-b-gray-300 px-4 flex items-center gap-6">
         <TabUnderline
           className="text-[13px] font-semibold pb-4 pt-4"
           active={activeTab === "chart"}
@@ -114,53 +132,77 @@ export default function ChartPanel({
         </TabUnderline>
       </div>
       {activeTab === "chart" && (
-        <div className="bg-[#181A20] flex-1 rounded-b-[10px] flex flex-col">
-          <div className="bg-[#181A20] flex justify-between p-2 border border-b-gray-700">
+        <div className="dark:bg-[#181A20] bg-white flex-1 rounded-b-[10px] flex flex-col">
+          <div className="dark:bg-[#181A20] bg-white flex justify-between p-2 ">
             <ul className="flex text-[12px] gap-2 text-gray-400 font-semibold">
-              <li>Thời gian</li>
+              <li className="dark:text-gray-400 text-gray-600">Thời gian</li>
               <li
-                className={timeframe === "1" ? "text-white" : "cursor-pointer"}
+                className={
+                  timeframe === "1"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "dark:text-gray-400 text-gray-600 cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
+                }
                 onClick={() => setTimeframe("1")}
               >
                 1s
               </li>
               <li
-                className={timeframe === "15" ? "text-white" : "cursor-pointer"}
+                className={
+                  timeframe === "15"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "dark:text-gray-400 text-gray-600 cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
+                }
                 onClick={() => setTimeframe("15")}
               >
                 15Phút
               </li>
               <li
-                className={timeframe === "60" ? "text-white" : "cursor-pointer"}
+                className={
+                  timeframe === "60"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "dark:text-gray-400 text-gray-600 cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
+                }
                 onClick={() => setTimeframe("60")}
               >
                 1h
               </li>
               <li
                 className={
-                  timeframe === "240" ? "text-white" : "cursor-pointer"
+                  timeframe === "240"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "dark:text-gray-400 text-gray-600 cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
                 }
                 onClick={() => setTimeframe("240")}
               >
                 4h
               </li>
               <li
-                className={timeframe === "D" ? "text-white" : "cursor-pointer"}
+                className={
+                  timeframe === "D"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "dark:text-gray-400 text-gray-600 cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
+                }
                 onClick={() => setTimeframe("D")}
               >
                 1Ngày
               </li>
               <li
-                className={timeframe === "W" ? "text-white" : "cursor-pointer"}
+                className={
+                  timeframe === "W"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "dark:text-gray-400 text-gray-600 cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
+                }
                 onClick={() => setTimeframe("W")}
               >
                 1Tuần
               </li>
             </ul>
-            <ul className="flex text-[12px] gap-2 font-semibold text-gray-400">
+            <ul className="flex text-[12px] gap-2 font-semibold dark:text-gray-400 text-gray-600">
               <li
                 className={
-                  chartType === "goc" ? "text-white" : "cursor-pointer"
+                  chartType === "goc"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
                 }
                 onClick={() => setChartType("goc")}
               >
@@ -168,7 +210,9 @@ export default function ChartPanel({
               </li>
               <li
                 className={
-                  chartType === "tradingview" ? "text-white" : "cursor-pointer"
+                  chartType === "tradingview"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
                 }
                 onClick={() => setChartType("tradingview")}
               >
@@ -176,7 +220,9 @@ export default function ChartPanel({
               </li>
               <li
                 className={
-                  chartType === "chitiet" ? "text-white" : "cursor-pointer"
+                  chartType === "chitiet"
+                    ? "dark:text-white text-black cursor-pointer"
+                    : "cursor-pointer hover:dark:text-gray-200 hover:text-gray-800"
                 }
                 onClick={() => setChartType("chitiet")}
               >
@@ -186,12 +232,12 @@ export default function ChartPanel({
           </div>
           <div className="flex-1 rounded-b-[10px] overflow-hidden">
             {chartType === "goc" && (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
+              <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600 text-lg">
                 Biểu đồ gốc (demo)
               </div>
             )}
             {chartType === "chitiet" && (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
+              <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600 text-lg">
                 Biểu đồ chi tiết (demo)
               </div>
             )}
@@ -206,10 +252,14 @@ export default function ChartPanel({
         </div>
       )}
       {activeTab === "info" && (
-        <div className="bg-emerald-700 flex-1 rounded-b-[10px]">12</div>
+        <div className="dark:bg-[#1f2937] bg-gray-100 flex-1 rounded-b-[10px] dark:text-white text-black">
+          Info content
+        </div>
       )}
       {activeTab === "trades" && (
-        <div className="bg-emerald-900 flex-1 rounded-b-[10px]">13</div>
+        <div className="dark:bg-[#1f2937] bg-gray-100 flex-1 rounded-b-[10px] dark:text-white text-black">
+          Trades content
+        </div>
       )}
     </div>
   );

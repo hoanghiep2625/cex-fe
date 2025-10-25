@@ -22,7 +22,7 @@ export default function ThemeToggle({ className = "" }) {
       {theme === "dark" ? (
         <SunMedium width={28} height={28} strokeWidth={1.7} />
       ) : (
-        <Moon width={24} height={24} strokeWidth={1.7} />
+        <Moon width={24} height={24} strokeWidth={1.7} className="text-black" />
       )}
     </button>
   );

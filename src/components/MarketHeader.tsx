@@ -8,18 +8,6 @@ import { useSymbolInfo } from "@/hooks/useSymbolInfo";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
-interface MarketData {
-  symbol: string;
-  price: number;
-  priceChange24h: number;
-  priceChangePercent24h: number;
-  highPrice24h: number;
-  lowPrice24h: number;
-  volume24h: number;
-  quoteAssetVolume24h: number;
-  name: string;
-}
-
 export default function MarketHeader({
   pair,
   type,
@@ -31,21 +19,13 @@ export default function MarketHeader({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Convert pair format: "BTC_USDT" → "BTCUSDT"
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
-
-  // Use WebSocket hook for real-time market data
   const { marketData, loading, connected } = useMarketData(symbol, type);
-
-  // Use API hook for symbol info (base_asset)
   const { symbolInfo, loading: symbolLoading } = useSymbolInfo(symbol);
-
   const baseAssetCode = useMemo(() => {
-    // Use symbolInfo.base_asset if available, otherwise extract from symbol
     if (symbolInfo?.base_asset) {
       return symbolInfo.base_asset.toUpperCase();
     }
-    // Fallback: extract from symbol (e.g., "BTC" from "BTCUSDT")
     return symbol.replace("USDT", "").toUpperCase();
   }, [symbolInfo, symbol]);
 
@@ -83,7 +63,7 @@ export default function MarketHeader({
   };
 
   return (
-    <div className="px-5 py-3 bg-[#181A20] flex items-center gap-8 rounded-[10px] relative h-[70px]">
+    <div className="px-5 py-3 dark:bg-[#181A20] bg-white flex items-center gap-8 rounded-[10px] relative h-[70px]">
       {/* Left Section - BTC Info */}
       <div className="flex items-center gap-6">
         {/* Icon and Name */}
@@ -102,7 +82,7 @@ export default function MarketHeader({
             />
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-white text-xl font-semibold">
+                <span className="dark:text-white text-black text-xl font-semibold">
                   {marketData?.symbol || symbol}
                 </span>
               </div>
@@ -122,7 +102,7 @@ export default function MarketHeader({
                 maximumFractionDigits: 2,
               })}
             </span>
-            <span className="text-white text-[12px] font-semibold">
+            <span className="dark:text-white text-black text-[12px] font-semibold">
               $
               {(marketData?.price || 0)?.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
@@ -146,11 +126,11 @@ export default function MarketHeader({
           <div className="relative flex-1">
             {/* Left Fade Gradient */}
             {canScrollLeft && (
-              <div className="absolute left-0 top-0 bottom-0 w-10 bg-linear-to-r from-[#181A20] to-transparent pointer-events-none z-10" />
+              <div className="absolute left-0 top-0 bottom-0 w-10 bg-linear-to-r dark:from-[#181A20] from-white to-transparent pointer-events-none z-10" />
             )}
             {/* Right Fade Gradient */}
             {canScrollRight && (
-              <div className="absolute right-0 top-0 bottom-0 w-10 bg-linear-to-l from-[#181A20] to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-10 bg-linear-to-l dark:from-[#181A20] from-white to-transparent pointer-events-none z-10" />
             )}
             <div
               ref={scrollContainerRef}
@@ -174,7 +154,7 @@ export default function MarketHeader({
                   )?.toFixed(2)}%`}
                 </span>
               </div>
-              <div className="text-white shrink-0">
+              <div className="dark:text-white text-black shrink-0">
                 <div>
                   <p className="text-[12px] text-gray-400">Giá cao nhất 24h</p>
                 </div>
@@ -185,7 +165,7 @@ export default function MarketHeader({
                   })}
                 </span>
               </div>
-              <div className="text-white shrink-0">
+              <div className="dark:text-white text-black shrink-0">
                 <div>
                   <p className="text-[12px] text-gray-400">Giá thấp nhất 24h</p>
                 </div>
@@ -196,7 +176,7 @@ export default function MarketHeader({
                   })}
                 </span>
               </div>
-              <div className="text-white shrink-0">
+              <div className="dark:text-white text-black shrink-0">
                 <div>
                   <p className="text-[12px] text-gray-400">
                     KL 24h({marketData?.symbol?.slice(0, -4) || "BTC"})
@@ -209,7 +189,7 @@ export default function MarketHeader({
                   })}
                 </span>
               </div>
-              <div className="text-white shrink-0">
+              <div className="dark:text-white text-black shrink-0">
                 <div>
                   <p className="text-[12px] text-gray-400">KL 24h(USDT)</p>
                 </div>
@@ -223,7 +203,7 @@ export default function MarketHeader({
                   )}
                 </span>
               </div>
-              <div className="text-white shrink-0">
+              <div className="dark:text-white text-black shrink-0">
                 <div>
                   <p className="text-[12px] text-gray-400">Thẻ token</p>
                 </div>
@@ -241,7 +221,7 @@ export default function MarketHeader({
                 onClick={() => scroll("right")}
                 className="absolute right-[-12px] top-2 flex items-center justify-center w-4 h-8 text-gray-400 hover:text-white rounded transition"
               >
-                <ChevronRight />
+                <ChevronRight className=" text-gray-400" />
               </button>
             )}
           </div>

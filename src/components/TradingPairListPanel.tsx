@@ -51,22 +51,22 @@ export default function TradingPairListPanel({
   const tabs = ["Mới", "USDC", "USDT", "FDUSD", "BNB"];
 
   return (
-    <div className="h-[50%] bg-[#181A20] rounded-[10px] text-white flex flex-col overflow-hidden">
+    <div className="h-[50%] dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col overflow-hidden">
       {/* Search Section */}
-      <div className="pt-4 border-b border-[#181A20]">
+      <div className="pt-4 dark:border-b dark:border-[#181A20] border-b border-gray-200">
         <div className="relative mb-3 px-4 text-xs font-semibold">
-          <Search className="absolute left-7 top-2 w-5 h-5 text-gray-500 text-xs" />
+          <Search className="absolute left-7 top-2 w-5 h-5 dark:text-gray-500 text-gray-600 text-xs" />
           <input
             type="text"
             placeholder="Tìm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#181A20] text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-500 transition"
+            className="w-full pl-10 pr-4 py-2 dark:bg-[#181A20] bg-white dark:text-white text-black rounded-lg dark:border-gray-600 border-gray-300 border focus:outline-none focus:dark:border-yellow-500 focus:border-yellow-400 transition"
           />
         </div>
 
         {/* Tabs */}
-        <div className="flex px-4 gap-6 overflow-x-auto scrollbar-hide border-b border-gray-700 items-center justify-center">
+        <div className="flex px-4 gap-6 overflow-x-auto scrollbar-hide dark:border-b dark:border-gray-700 border-b border-gray-200 items-center justify-center">
           <div className="mb-2 flex justify-center gap-6 items-center">
             {tabs.map((tab) => (
               <div key={tab} className="relative inline-flex ">
@@ -74,8 +74,8 @@ export default function TradingPairListPanel({
                   onClick={() => setActiveTab(tab)}
                   className={` text-xs font-semibold transition ${
                     activeTab === tab
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? "dark:text-white text-black"
+                      : "dark:text-gray-400 text-gray-600 hover:dark:text-white hover:text-black"
                   }`}
                 >
                   {tab}
@@ -85,7 +85,7 @@ export default function TradingPairListPanel({
                 )}
               </div>
             ))}
-            <button className="text-gray-400 flex hover:text-gray-300 transition">
+            <button className="dark:text-gray-400 text-gray-600 flex hover:dark:text-gray-300 hover:text-gray-800 transition">
               <ChevronRight width={16} height={16} />
             </button>
           </div>
@@ -95,7 +95,7 @@ export default function TradingPairListPanel({
       {/* Table Headers and Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Header Row */}
-        <div className="sticky top-0 px-4 bg-[#181A20] py-3 flex justify-between text-xs font-semibold text-gray-400">
+        <div className="sticky top-0 px-4 dark:bg-[#181A20] bg-white py-3 flex justify-between text-xs font-semibold dark:text-gray-400 text-gray-600">
           <div>Cặp</div>
           <div className="flex gap-4">
             <div className="flex items-center gap-1">
@@ -116,14 +116,14 @@ export default function TradingPairListPanel({
               href={`/trade/${p.name.replace("/", "_")}?type=spot`}
               key={index}
             >
-              <div className="px-4 py-1 flex justify-between hover:bg-[#1F2329] transition text-xs items-center cursor-pointer">
+              <div className="px-4 py-1 flex justify-between dark:hover:bg-[#1F2329] hover:bg-gray-100 transition text-xs items-center cursor-pointer">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       toggleFavorite(p.name);
                     }}
-                    className="text-gray-500 hover:text-yellow-500 transition"
+                    className="dark:text-gray-500 text-gray-600 hover:text-yellow-500 transition"
                   >
                     <Star
                       width={14}
@@ -132,14 +132,16 @@ export default function TradingPairListPanel({
                     />
                   </button>
                   <div className="flex">
-                    <div className="font-semibold text-white">{p.name}</div>
-                    <div className="text-xs text-white bg-gray-700 px-1 ml-1">
+                    <div className="font-semibold dark:text-white text-black">
+                      {p.name}
+                    </div>
+                    <div className="text-xs dark:text-white text-black dark:bg-gray-700 bg-gray-300 px-1 ml-1">
                       {p.leverage}
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-8">
-                  <div className="font-semibold text-white text-right">
+                  <div className="font-semibold dark:text-white text-black text-right">
                     {p.price.toLocaleString("en-US", {
                       minimumFractionDigits: 4,
                       maximumFractionDigits: 4,

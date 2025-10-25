@@ -23,9 +23,9 @@ export default function UserOrderManagementPanel({
   ];
 
   return (
-    <div className="bg-[#181A20] rounded-[10px] min-h-[400px] mb-[30px] m-1">
-      <div className="relative flex justify-between items-center p-4 pb-0 border-b border-gray-700">
-        <ul className="text-gray-400 text-xs font-semibold flex gap-4">
+    <div className="dark:bg-[#181A20] bg-white rounded-[10px] min-h-[400px] mb-[30px] m-1">
+      <div className="relative flex justify-between items-center p-4 pb-0 dark:border-b dark:border-gray-700 border-b border-gray-200">
+        <ul className="dark:text-gray-400 text-gray-600 text-xs font-semibold flex gap-4">
           {tabs.map((tab) => (
             <li key={tab.id}>
               <TabUnderline
@@ -38,7 +38,7 @@ export default function UserOrderManagementPanel({
             </li>
           ))}
         </ul>
-        <div className="absolute text-white text-xs flex gap-2 right-4 top-[15px]">
+        <div className="absolute dark:text-white text-black text-xs flex gap-2 right-4 top-[15px]">
           <CustomCheckbox
             checked={hideOtherPairs}
             onChange={setHideOtherPairs}
@@ -46,7 +46,7 @@ export default function UserOrderManagementPanel({
           />
         </div>
       </div>
-      <div className="text-white bg-[#181A20] p-4 min-h-[300px]">
+      <div className="dark:text-white text-black dark:bg-[#181A20] bg-white p-4 min-h-[300px]">
         {activeTab === "orders" && <div>Giao dịch đang chờ khớp lệnh</div>}
         {activeTab === "history" && <div>Lịch sử lệnh</div>}
         {activeTab === "trades" && <div>Lịch sử giao dịch</div>}

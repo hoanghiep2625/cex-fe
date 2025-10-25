@@ -18,7 +18,9 @@ export default function TabUnderline({
       <button
         onClick={onClick}
         className={`${
-          active ? "text-white" : "text-gray-400 hover:text-gray-300"
+          active
+            ? "dark:text-white text-black"
+            : "text-gray-400 dark:hover:text-white hover:text-black"
         } ${className}`}
       >
         {children}
