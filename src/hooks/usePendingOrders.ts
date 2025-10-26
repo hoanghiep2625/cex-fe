@@ -93,9 +93,7 @@ export const usePendingOrders = (
   // Function to create new listenKey
   const createListenKey = async (): Promise<string | null> => {
     try {
-      const response = await axiosInstance.post<any>(
-        "/user-sessions/listen-key"
-      );
+      const response = await axiosInstance.post("/user-sessions/listen-key");
       // Response structure: { statusCode, message, data: { statusCode, message, data: { listenKey, expiresIn, expiresAt } } }
       const listenKeyData: ListenKeyData = response.data?.data?.data;
 
@@ -133,7 +131,7 @@ export const usePendingOrders = (
     currentListenKey: string
   ): Promise<string | null> => {
     try {
-      const response = await axiosInstance.post<any>(
+      const response = await axiosInstance.post(
         `/user-sessions/listen-key/${currentListenKey}/refresh`
       );
       // Response structure: same as create

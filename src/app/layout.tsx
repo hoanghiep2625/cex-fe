@@ -1,4 +1,4 @@
-import { Roboto, Be_Vietnam_Pro } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { SymbolProvider } from "@/context/SymbolContext";
 import { WebSocketProvider } from "@/context/WebSocketContext";

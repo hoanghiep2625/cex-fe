@@ -77,7 +77,7 @@ export default function ChartPanel({
       if (win.TradingView) {
         new win.TradingView.widget({
           autosize: true,
-          symbol: "BTCUSD",
+          symbol: pair.replace("_", ""),
           interval: timeframe,
           timezone: "Etc/UTC",
           theme: isDark ? "dark" : "light",
