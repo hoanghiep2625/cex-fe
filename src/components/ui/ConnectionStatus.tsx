@@ -1,3 +1,5 @@
+import { RxDotFilled } from "react-icons/rx";
+
 interface ConnectionStatusProps {
   connected: boolean;
   className?: string;
@@ -8,11 +10,15 @@ export default function ConnectionStatus({
   className = "",
 }: ConnectionStatusProps) {
   return (
-    <div className={`text-xs ml-2 absolute right-1 top-0 ${className}`}>
+    <div className={`ml-2 absolute right-0.5 top-0.5 ${className}`}>
       {connected ? (
-        <span className="text-green-400">●</span>
+        <span className="text-green-400" title="Connection">
+          <RxDotFilled />
+        </span>
       ) : (
-        <span className="text-red-400">●</span>
+        <span className="text-red-400" title="Disconnected">
+          <RxDotFilled />
+        </span>
       )}
     </div>
   );
