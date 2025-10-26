@@ -1,3 +1,5 @@
+import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+
 interface NumberInputProps {
   label: string;
   value: string;
@@ -46,19 +48,19 @@ export default function NumberInput({
         </div>
       </div>
       {showButtons && (
-        <div className="flex flex-col items-center justify-center w-6 gap-1 border border-l-0 dark:border-gray-700 border-gray-300 rounded-r-md">
+        <div className="flex flex-col items-center justify-center w-6 gap-0.5 border border-l-0 dark:border-gray-700 border-gray-300 rounded-r-md">
           <button
             onClick={onIncrement}
             className="text-[8px] text-gray-400 dark:hover:text-white hover:text-gray-500 leading-none"
           >
-            ▲
+            <IoMdArrowDropup className="w-4 h-4" />
           </button>
           <hr className="w-full dark:border-gray-700 border-gray-300" />
           <button
             onClick={onDecrement}
             className="text-[8px] text-gray-400 dark:hover:text-white hover:text-gray-500 leading-none"
           >
-            ▼
+            <IoMdArrowDropdown className="w-4 h-4" />
           </button>
         </div>
       )}

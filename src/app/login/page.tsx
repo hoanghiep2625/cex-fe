@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axiosInstance";
-import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
+import { LuEye, LuEyeOff } from "react-icons/lu";
 
 interface LoginResponse {
   statusCode: number;
@@ -137,7 +137,7 @@ export default function LoginPage() {
                   className="absolute right-3 top-3 text-gray-400 hover:text-gray-200 transition"
                   disabled={loading}
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <LuEyeOff size={20} /> : <LuEye size={20} />}
                 </button>
               </div>
             </div>

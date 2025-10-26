@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { Bolt, BookType, Search, LogOut } from "lucide-react";
+import { LuBolt, LuBookType, LuLogOut, LuSearch } from "react-icons/lu";
 
 export default function MenuBar({
   pair,
@@ -30,7 +30,7 @@ export default function MenuBar({
           ></path>
         </svg>
         <ul className="dark:text-white text-black flex gap-8 text-[13px] font-semibold">
-          <li>Mua crypto</li>
+          <li>Mua Crypto</li>
           <li>Thị trường</li>
           <li>Giao dịch</li>
           <li>Futures</li>
@@ -40,17 +40,16 @@ export default function MenuBar({
         </ul>
       </div>
       <div className="flex gap-4 justify-center items-center">
-        <Search
+        <LuSearch
           className="dark:text-white text-black w-6 h-6"
           strokeWidth={1.7}
         />
         {loading ? (
-          // Đang check auth
-          <div className="text-gray-400 text-sm">Đang kiểm tra...</div>
+          <div></div>
         ) : isAuthenticated ? (
           // Đã đăng nhập
           <>
-            <div className="flex items-center gap-3 px-4 py-1 border border-gray-500 dark:bg-[#181A20] bg-white rounded-md">
+            <div className="flex items-center gap-3 px-4 py-1 border border-gray-300 dark:bg-[#181A20] bg-white rounded-md">
               <span className="dark:text-white text-black text-sm">
                 {user?.email || user?.username}
               </span>
@@ -60,12 +59,7 @@ export default function MenuBar({
               title="Đăng xuất"
               className="text-white cursor-pointer"
             >
-              <LogOut
-                width={24}
-                height={24}
-                strokeWidth={1.5}
-                className="dark:text-white text-black"
-              />
+              <LuLogOut className="dark:text-white text-black w-6 h-6" />
             </button>
           </>
         ) : (
@@ -85,11 +79,11 @@ export default function MenuBar({
 
         <div className="flex gap-4 justify-center items-center">
           <ThemeToggle className="w-6 h-6" />
-          <BookType
+          <LuBookType
             strokeWidth={1.7}
             className=" w-6 h-6 cursor-pointer dark:text-white text-black"
           />
-          <Bolt
+          <LuBolt
             strokeWidth={1.7}
             className="dark:text-white text-black w-6 h-6 cursor-pointer"
           />

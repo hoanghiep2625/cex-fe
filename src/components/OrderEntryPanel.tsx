@@ -5,11 +5,12 @@ import { useBalance } from "@/hooks/useBalance";
 import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
-import { CircleAlert, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
+import { LuCircleAlert, LuPlus } from "react-icons/lu";
+import { IoMdArrowDropdown } from "react-icons/io";
 
 export default function OrderEntryPanel({
   pair,
@@ -207,10 +208,12 @@ export default function OrderEntryPanel({
             }`}
           >
             Stop Limit
-            <span className="text-xs">▼</span>
+            <span className="text-xs">
+              <IoMdArrowDropdown className="w-4 h-4" />
+            </span>
           </button>
           <button className="dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800">
-            <CircleAlert width={16} height={16} />
+            <LuCircleAlert width={16} height={16} />
           </button>
         </div>
 
@@ -264,7 +267,7 @@ export default function OrderEntryPanel({
                     {quoteCurrency}
                   </span>
                   <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
-                    <Plus
+                    <LuPlus
                       width={12}
                       height={12}
                       className="text-white dark:text-[#181A20]"

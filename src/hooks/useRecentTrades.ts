@@ -27,8 +27,6 @@ export const useRecentTrades = (symbol: string = "BTCUSDT") => {
       process.env.NEXT_PUBLIC_WS_URL || `${protocol}://api-cex.tahoanghiep.com`;
     const wsUrl = `${baseUrl}/ws/trades?symbol=${symbol}`;
 
-    console.log(`[RecentTrades] Connecting to: ${wsUrl}`);
-
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

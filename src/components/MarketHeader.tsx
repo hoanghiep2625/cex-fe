@@ -2,11 +2,10 @@
 
 import { useRef, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
 import { useMarketData } from "@/hooks/useMarketData";
 import { useSymbolInfo } from "@/hooks/useSymbolInfo";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 export default function MarketHeader({
   pair,
@@ -119,7 +118,7 @@ export default function MarketHeader({
             onClick={() => scroll("left")}
             className="shrink-0 flex items-center justify-center w-4 h-8 text-gray-400 hover:text-white rounded transition"
           >
-            <ChevronLeft />
+            <LuChevronLeft />
           </button>
         )}
         {marketData && (
@@ -219,9 +218,9 @@ export default function MarketHeader({
             {canScrollRight && (
               <button
                 onClick={() => scroll("right")}
-                className="absolute right-[-12px] top-2 flex items-center justify-center w-4 h-8 text-gray-400 hover:text-white rounded transition"
+                className="absolute -right-3 top-2 flex items-center justify-center w-4 h-8 text-gray-400 hover:text-white rounded transition"
               >
-                <ChevronRight className=" text-gray-400" />
+                <LuChevronRight className=" text-gray-400" />
               </button>
             )}
           </div>

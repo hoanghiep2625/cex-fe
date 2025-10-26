@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOrderBook } from "@/hooks/useOrderBook";
 import { useSymbol } from "@/context/SymbolContext";
+import { useWebSocket } from "@/context/WebSocketContext";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -16,10 +17,16 @@ export default function OrderBook({
 }) {
   const [grouping, setGrouping] = useState("0.01");
   const { symbol } = useSymbol();
+  const { setConnected } = useWebSocket(); // Get setter from context
   const { orderBook, connected, error } = useOrderBook(
     symbol?.code || pair.replace("_", ""),
     type || "spot"
   );
+
+  // Sync connected state to global context
+  useEffect(() => {
+    setConnected(connected);
+  }, [connected, setConnected]);
 
   const { asks = [], bids = [], currentPrice = 0 } = orderBook || {};
   const totalBids = bids.reduce((s, b) => s + b.quantity, 0);
@@ -81,19 +88,28 @@ export default function OrderBook({
       </div>
 
       <div className="flex-1 overflow-y-auto flex flex-col dark:text-white text-black">
-        <div>
+        {/* ASKS - Scroll to bottom */}
+        <div className="flex-1 flex flex-col-reverse overflow-y-auto">
           {asks.map((a, i) => (
             <Row key={`a${i}`} level={a} isAsk />
           ))}
         </div>
 
-        <div className="px-4 py-2 flex items-center gap-2">
+        {/* Current Price - CENTER */}
+        <div className="px-4 py-3 flex items-center sticky z-10 dark:bg-[#181A20] bg-white">
           <span className="text-lg font-bold text-yellow-400">
             {fmt(currentPrice)}
+            {""}
+            <span className="text-gray-400 text-xs font-semibold">
+              {" "}
+              {"$"}
+              {fmt(currentPrice)}
+            </span>
           </span>
         </div>
 
-        <div>
+        {/* BIDS - Scroll normally */}
+        <div className="flex-1 overflow-y-auto">
           {bids.map((b, i) => (
             <Row key={`b${i}`} level={b} />
           ))}

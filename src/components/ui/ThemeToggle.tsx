@@ -2,7 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
-import { Moon, SunMedium } from "lucide-react";
+import { LuMoon, LuSunMedium } from "react-icons/lu";
 
 export default function ThemeToggle({ className = "" }) {
   const { theme, setTheme } = useTheme();
@@ -20,9 +20,9 @@ export default function ThemeToggle({ className = "" }) {
       className={`text-white hover:text-yellow-400 dark:hover:text-yellow-300 transition ${className}`}
     >
       {theme === "dark" ? (
-        <SunMedium width={28} height={28} strokeWidth={1.7} />
+        <LuSunMedium className="text-white w-6 h-6 font-semibold" />
       ) : (
-        <Moon width={24} height={24} strokeWidth={1.7} className="text-black" />
+        <LuMoon className="text-black w-6 h-6 font-semibold" />
       )}
     </button>
   );

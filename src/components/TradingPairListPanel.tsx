@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Search, Star } from "lucide-react";
 import { useSymbols } from "@/hooks/useSymbols";
 import Link from "next/link";
+import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
+import { TiArrowUnsorted } from "react-icons/ti";
 
 interface TradingPair {
   name: string;
@@ -55,7 +56,7 @@ export default function TradingPairListPanel({
       {/* Search Section */}
       <div className="pt-4 dark:border-b dark:border-[#181A20] border-b border-gray-200">
         <div className="relative mb-3 px-4 text-xs font-semibold">
-          <Search className="absolute left-7 top-2 w-5 h-5 dark:text-gray-500 text-gray-600 text-xs" />
+          <LuSearch className="absolute left-7 top-2 w-5 h-5 dark:text-gray-500 text-gray-600 text-xs" />
           <input
             type="text"
             placeholder="Tìm"
@@ -81,12 +82,12 @@ export default function TradingPairListPanel({
                   {tab}
                 </button>
                 {activeTab === tab && (
-                  <div className="absolute bottom-[-8px] left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-[3px] bg-yellow-400" />
                 )}
               </div>
             ))}
             <button className="dark:text-gray-400 text-gray-600 flex hover:dark:text-gray-300 hover:text-gray-800 transition">
-              <ChevronRight width={16} height={16} />
+              <LuChevronRight width={16} height={16} />
             </button>
           </div>
         </div>
@@ -97,14 +98,18 @@ export default function TradingPairListPanel({
         {/* Header Row */}
         <div className="sticky top-0 px-4 dark:bg-[#181A20] bg-white py-3 flex justify-between text-xs font-semibold dark:text-gray-400 text-gray-600">
           <div>Cặp</div>
-          <div className="flex gap-4">
-            <div className="flex items-center gap-1">
-              Giá g...
-              <span className="text-xs">↕</span>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-1 truncate whitespace-nowrap">
+              Giá gần nhất
+              <span className="text-xs">
+                <TiArrowUnsorted />
+              </span>
             </div>
             <div className="flex items-center gap-1">
-              / Biến động tro...
-              <span className="text-xs">↕</span>
+              / Biến động trong 24h
+              <span className="text-xs">
+                <TiArrowUnsorted />
+              </span>
             </div>
           </div>
         </div>
@@ -125,7 +130,7 @@ export default function TradingPairListPanel({
                     }}
                     className="dark:text-gray-500 text-gray-600 hover:text-yellow-500 transition"
                   >
-                    <Star
+                    <LuStar
                       width={14}
                       height={14}
                       fill={favorites.has(p.name) ? "currentColor" : "none"}

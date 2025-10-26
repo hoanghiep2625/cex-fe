@@ -108,23 +108,23 @@ export default function ChartPanel({
   // Chart UI component
   return (
     <div className="flex-2 dark:bg-[#181A20] bg-white rounded-[10px] flex flex-col">
-      <div className="dark:bg-[#181A20] bg-white h-[50px] rounded-t-[10px] border-b dark:border-b-gray-700 border-b-gray-300 px-4 flex items-center gap-6">
+      <div className="dark:bg-[#181A20] bg-white h-[45px] rounded-t-[10px] border-b dark:border-b-gray-700 border-b-gray-300 px-4 flex items-center gap-6">
         <TabUnderline
-          className="text-[13px] font-semibold pb-4 pt-4"
+          className="text-[13px] font-semibold pb-3 pt-3"
           active={activeTab === "chart"}
           onClick={() => setActiveTab("chart")}
         >
           Đồ thị
         </TabUnderline>
         <TabUnderline
-          className="text-[13px] font-semibold pb-4 pt-4"
+          className="text-[13px] font-semibold pb-3 pt-3"
           active={activeTab === "info"}
           onClick={() => setActiveTab("info")}
         >
           Thông tin
         </TabUnderline>
         <TabUnderline
-          className="text-[13px] font-semibold pb-4 pt-4"
+          className="text-[13px] font-semibold pb-3 pt-3"
           active={activeTab === "trades"}
           onClick={() => setActiveTab("trades")}
         >

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { LuCheck } from "react-icons/lu";
 
 interface CustomCheckboxProps {
   checked: boolean;
@@ -24,7 +24,7 @@ export default function CustomCheckbox({
         }`}
       >
         {checked && (
-          <Check size={16} className="dark:text-[#181A20] text-white" />
+          <LuCheck size={16} className="dark:text-[#181A20] text-white" />
         )}
       </button>
       {label && (
