@@ -14,32 +14,23 @@ import { IoMdArrowDropdown } from "react-icons/io";
 
 export default function OrderEntryPanel({
   pair,
-  type,
 }: {
   pair: string;
   type: string;
 }) {
-  const [accountType, setAccountType] = useState<
-    "spot" | "cross" | "isolated" | "luoi"
-  >("spot");
   const [orderType, setOrderType] = useState<"limit" | "market" | "stop">(
     "limit"
   );
-  const { user, loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
   const { balances, balanceLoading, fetchBalance } = useBalance();
   const { symbol } = useSymbol();
   const [activeTab, setActiveTab] = useState("spot");
-  // Buy form state
   const [buyPrice, setBuyPrice] = useState("");
   const [buyQty, setBuyQty] = useState("");
   const [buyLoading, setBuyLoading] = useState(false);
-
-  // Sell form state
   const [sellPrice, setSellPrice] = useState("");
   const [sellQty, setSellQty] = useState("");
   const [sellLoading, setSellLoading] = useState(false);
-
-  // Calculate totals
   const buyTotal =
     buyPrice && buyQty
       ? (parseFloat(buyPrice) * parseFloat(buyQty)).toFixed(8)
@@ -78,7 +69,7 @@ export default function OrderEntryPanel({
       };
 
       console.log("Placing buy order:", orderData);
-      const response = await axiosInstance.post("/orders", orderData);
+      await axiosInstance.post("/orders", orderData);
 
       toast.success(`Lệnh mua thành công!`);
       setBuyPrice("");
@@ -117,7 +108,7 @@ export default function OrderEntryPanel({
       };
 
       console.log("Placing sell order:", orderData);
-      const response = await axiosInstance.post("/orders", orderData);
+      await axiosInstance.post("/orders", orderData);
 
       toast.success(`Lệnh bán thành công!`);
       setSellPrice("");
@@ -134,9 +125,7 @@ export default function OrderEntryPanel({
     }
   };
 
-  // Get base and quote currency from pair prop (BTC_USDT → BTC, USDT)
   const [baseCurrency, quoteCurrency] = pair.split("_");
-  // Get balances for the current trading pair
   const baseAssetBalance =
     balances.find((b) => b.currency === baseCurrency)?.available || "0";
   const quoteAssetBalance =

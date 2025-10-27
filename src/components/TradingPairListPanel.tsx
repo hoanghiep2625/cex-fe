@@ -6,26 +6,11 @@ import Link from "next/link";
 import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
 
-interface TradingPair {
-  name: string;
-  leverage: string;
-  price: number;
-  change: number;
-}
-
-export default function TradingPairListPanel({
-  pair,
-  type,
-}: {
-  pair: string;
-  type: string;
-}) {
+export default function TradingPairListPanel() {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  // Fetch symbols based on active tab (quote asset)
-  const { symbols, loading, error } = useSymbols(activeTab);
+  const { symbols } = useSymbols(activeTab);
 
   // Convert symbols to display format
   const tradingPairs = symbols.map((sym) => ({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CustomCheckbox from "./ui/CustomCheckbox";
 import TabUnderline from "./ui/TabUnderline";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,16 +11,10 @@ import toast from "react-hot-toast";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { LuX } from "react-icons/lu";
 
-export default function UserOrderManagementPanel({
-  pair,
-  type,
-}: {
-  pair: string;
-  type: string;
-}) {
+export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   const [hideOtherPairs, setHideOtherPairs] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { orders, loading, error, connected } = usePendingOrders(
     hideOtherPairs ? pair : undefined,
     hideOtherPairs

@@ -18,7 +18,7 @@ export default function OrderBook({
   const [grouping, setGrouping] = useState("0.01");
   const { symbol } = useSymbol();
   const { setConnected } = useWebSocket(); // Get setter from context
-  const { orderBook, connected, error } = useOrderBook(
+  const { orderBook, connected } = useOrderBook(
     symbol?.code || pair.replace("_", ""),
     type || "spot"
   );

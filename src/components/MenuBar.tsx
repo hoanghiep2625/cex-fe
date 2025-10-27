@@ -5,13 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { LuBolt, LuBookType, LuLogOut, LuSearch } from "react-icons/lu";
 
-export default function MenuBar({
-  pair,
-  type,
-}: {
-  pair: string;
-  type: string;
-}) {
+export default function MenuBar() {
   const { user, loading, isAuthenticated, logout } = useAuth();
 
   return (

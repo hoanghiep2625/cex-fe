@@ -31,7 +31,7 @@ export default function TradePage() {
 
   return (
     <div>
-      <MenuBar pair={pair} type={type} />
+      <MenuBar />
       <div className="flex min-h-[900px] gap-1 mt-1 mx-1">
         {/* <div className="bg-red-500 w-full h-15"></div> */}
         <div className="flex-6 gap-1 flex flex-col">
@@ -39,18 +39,18 @@ export default function TradePage() {
           <div className="flex-1 flex gap-1">
             <OrderBook pair={pair} type={type} />
             <div className="flex-[2.5] flex flex-col gap-1">
-              <ChartPanel pair={pair} type={type} />
+              <ChartPanel pair={pair} />
               <OrderEntryPanel pair={pair} type={type} />
             </div>
           </div>
         </div>
         <div className="flex-[1.7] flex flex-col gap-1">
-          <TradingPairListPanel pair={pair} type={type} />
-          <RecentTrades pair={pair} type={type} />
+          <TradingPairListPanel />
+          <RecentTrades pair={pair} />
         </div>
       </div>
-      <UserOrderManagementPanel pair={pair} type={type} />
-      <GlobalStatusBar pair={pair} type={type} />
+      <UserOrderManagementPanel pair={pair} />
+      <GlobalStatusBar />
     </div>
   );
 }

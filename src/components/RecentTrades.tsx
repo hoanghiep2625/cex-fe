@@ -5,25 +5,12 @@ import { useRecentTrades } from "@/hooks/useRecentTrades";
 import TabUnderline from "./ui/TabUnderline";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
-interface Trade {
-  price: string;
-  quantity: string;
-  time: number;
-  takerSide: "BUY" | "SELL";
-}
-
-export default function RecentTrades({
-  pair,
-  type,
-}: {
-  pair: string;
-  type: string;
-}) {
+export default function RecentTrades({ pair }: { pair: string }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
 
   // Convert pair format: "BTC_USDT" → "BTCUSDT"
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
-  const { trades, loading, error, connected } = useRecentTrades(symbol);
+  const { trades, connected } = useRecentTrades(symbol);
 
   // Format time from milliseconds to HH:MM:SS
   const formatTime = (timestamp: number) => {

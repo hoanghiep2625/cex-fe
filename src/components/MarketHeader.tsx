@@ -19,8 +19,8 @@ export default function MarketHeader({
   const [canScrollRight, setCanScrollRight] = useState(true);
 
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
-  const { marketData, loading, connected } = useMarketData(symbol, type);
-  const { symbolInfo, loading: symbolLoading } = useSymbolInfo(symbol);
+  const { marketData, connected } = useMarketData(symbol, type);
+  const { symbolInfo } = useSymbolInfo(symbol);
   const baseAssetCode = useMemo(() => {
     if (symbolInfo?.base_asset) {
       return symbolInfo.base_asset.toUpperCase();

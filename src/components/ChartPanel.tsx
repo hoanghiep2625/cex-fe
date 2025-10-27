@@ -9,13 +9,7 @@ interface TradingViewWindow extends Window {
   };
 }
 
-export default function ChartPanel({
-  pair,
-  type,
-}: {
-  pair: string;
-  type: string;
-}) {
+export default function ChartPanel({ pair }: { pair: string }) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"chart" | "info" | "trades">(
     "chart"
@@ -103,7 +97,7 @@ export default function ChartPanel({
         });
       }
     }
-  }, [chartType, timeframe, scriptLoaded, isDark]);
+  }, [chartType, timeframe, scriptLoaded, isDark, pair]);
 
   // Chart UI component
   return (

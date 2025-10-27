@@ -14,13 +14,7 @@ const tickers = [
   { symbol: "LINK/USDT", change: "+1.45%", price: "18.92" },
 ];
 
-export default function GlobalStatusBar({
-  pair,
-  type,
-}: {
-  pair: string;
-  type: string;
-}) {
+export default function GlobalStatusBar() {
   const { connected } = useWebSocket();
   const connectionStatus = connected ? "Kết nối ổn định" : "Mất kết nối";
 
@@ -33,11 +27,9 @@ export default function GlobalStatusBar({
           }`}
         >
           <LuSignal />
-
           {connectionStatus}
         </div>
-
-        <div className="w-[68%] flex flex-row gap-1">
+        <div className="w-[68%] flex items-center flex-row gap-1">
           <LuArrowLeftRight width={14} height={14} className="" />
           <div className="overflow-hidden flex-1">
             <div className=" animate-scroll flex gap-8 whitespace-nowrap ">

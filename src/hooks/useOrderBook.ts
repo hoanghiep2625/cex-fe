@@ -18,7 +18,10 @@ interface BackendOrderBook {
   timestamp: number;
 }
 
-export const useOrderBook = (symbol: string = "BTCUSDT", type: string = "spot") => {
+export const useOrderBook = (
+  symbol: string = "BTCUSDT",
+  type: string = "spot"
+) => {
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export const useOrderBook = (symbol: string = "BTCUSDT", type: string = "spot") 
       } catch {}
       ws.close();
     };
-  }, [symbol]);
+  }, [symbol, type]);
 
   return { orderBook, loading, error, connected };
 };
