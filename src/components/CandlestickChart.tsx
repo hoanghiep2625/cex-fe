@@ -87,7 +87,7 @@ export default function CandlestickChart({
     if (!candlestickSeriesRef.current || candles.length === 0) return;
 
     const data: CandlestickData[] = candles.map((candle) => ({
-      time: (candle.open_time / 1000) as any, // Convert to seconds
+      time: Math.floor(candle.open_time / 1000) as CandlestickData["time"], // Convert ms to seconds
       open: parseFloat(candle.open),
       high: parseFloat(candle.high),
       low: parseFloat(candle.low),
