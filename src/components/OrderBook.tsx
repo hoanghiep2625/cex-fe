@@ -5,6 +5,9 @@ import { useOrderBook } from "@/hooks/useOrderBook";
 import { useSymbol } from "@/context/SymbolContext";
 import { useWebSocket } from "@/context/WebSocketContext";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import axiosInstance from "@/lib/axiosInstance";
+import { useQuery } from "@tanstack/react-query";
+import { SymbolInfo } from "@/components/MarketHeader";
 
 const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
@@ -22,6 +25,14 @@ export default function OrderBook({
     symbol?.code || pair.replace("_", ""),
     type || "spot"
   );
+  const { data } = useQuery<SymbolInfo>({
+    queryKey: ["symbolInfo"],
+    queryFn: () =>
+      axiosInstance
+        .get(`/symbols/code/${symbol}`)
+        .then((r) => r.data?.data ?? r.data ?? []),
+  });
+  console.log("dataaaaaaa", data);
 
   // Sync connected state to global context
   useEffect(() => {
@@ -82,8 +93,8 @@ export default function OrderBook({
       </div>
 
       <div className="px-4 py-2 text-[10px] text-gray-500 font-semibold grid grid-cols-3 gap-4">
-        <span>Giá (USDT)</span>
-        <span className="text-right">Số lượng (BTC)</span>
+        <span>Giá ({data?.quote_asset})</span>
+        <span className="text-right">Số lượng ({data?.base_asset})</span>
         <span className="text-right">Tổng</span>
       </div>
 

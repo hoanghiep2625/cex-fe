@@ -1,7 +1,10 @@
 "use client";
 
 import TabUnderline from "@/components/ui/TabUnderline";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
+import CandlestickChart from "@/components/CandlestickChart";
+import { useCandles } from "@/hooks/useCandles";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 interface TradingViewWindow extends Window {
   TradingView?: {
@@ -15,11 +18,31 @@ export default function ChartPanel({ pair }: { pair: string }) {
     "chart"
   );
   const [chartType, setChartType] = useState<"goc" | "tradingview" | "chitiet">(
-    "tradingview"
+    "goc"
   );
   const [timeframe, setTimeframe] = useState("D");
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [isDark, setIsDark] = useState(true);
+
+  // Map timeframe to interval for API - memoized để tránh reconnect
+  const interval = useMemo(() => {
+    const map: Record<string, string> = {
+      "1": "1m",
+      "15": "15m",
+      "60": "1h",
+      "240": "4h",
+      D: "1d",
+      W: "1w",
+    };
+    return map[timeframe] || "1d";
+  }, [timeframe]);
+
+  // Fetch candles data via WebSocket
+  const { candles, loading, connected } = useCandles({
+    symbol: pair,
+    interval,
+    enabled: chartType === "goc",
+  });
 
   // Detect dark mode
   useEffect(() => {
@@ -101,7 +124,7 @@ export default function ChartPanel({ pair }: { pair: string }) {
 
   // Chart UI component
   return (
-    <div className="flex-2 dark:bg-[#181A20] bg-white rounded-[10px] flex flex-col">
+    <div className="relative flex-2 dark:bg-[#181A20] bg-white rounded-[10px] flex flex-col">
       <div className="dark:bg-[#181A20] bg-white h-[45px] rounded-t-[10px] border-b dark:border-b-gray-700 border-b-gray-300 px-4 flex items-center gap-6">
         <TabUnderline
           className="text-[13px] font-semibold pb-3 pt-3"
@@ -138,7 +161,7 @@ export default function ChartPanel({ pair }: { pair: string }) {
                 }
                 onClick={() => setTimeframe("1")}
               >
-                1s
+                1Phút
               </li>
               <li
                 className={
@@ -226,8 +249,18 @@ export default function ChartPanel({ pair }: { pair: string }) {
           </div>
           <div className="flex-1 rounded-b-[10px] overflow-hidden">
             {chartType === "goc" && (
-              <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600 text-lg">
-                Biểu đồ gốc (demo)
+              <div className="w-full h-full">
+                {loading ? (
+                  <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600">
+                    Đang tải dữ liệu...
+                  </div>
+                ) : candles.length === 0 ? (
+                  <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600">
+                    Chưa có dữ liệu nến
+                  </div>
+                ) : (
+                  <CandlestickChart candles={candles} isDark={isDark} />
+                )}
               </div>
             )}
             {chartType === "chitiet" && (
@@ -255,6 +288,7 @@ export default function ChartPanel({ pair }: { pair: string }) {
           Trades content
         </div>
       )}
+      <ConnectionStatus connected={connected} />
     </div>
   );
 }
