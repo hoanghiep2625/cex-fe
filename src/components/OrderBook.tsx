@@ -52,7 +52,7 @@ export default function OrderBook({
 
   const Row = ({ level, isAsk }: { level: Level; isAsk?: boolean }) => (
     <div
-      className={`px-4 py-1 grid grid-cols-3 gap-4 relative text-xs hover:dark:bg-gray-800/50 hover:bg-gray-100/50`}
+      className={`px-4 py-0.5 grid grid-cols-3 gap-4 relative text-xs hover:dark:bg-gray-800/50 hover:bg-gray-100/50`}
     >
       <div
         className={`absolute inset-0 ${

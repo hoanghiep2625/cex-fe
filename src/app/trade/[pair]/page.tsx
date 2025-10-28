@@ -44,7 +44,7 @@ export default function TradePage() {
             </div>
           </div>
         </div>
-        <div className="flex-[1.7] flex flex-col gap-1">
+        <div className="flex-[1.7] h-[1005px] flex flex-col gap-1">
           <TradingPairListPanel />
           <RecentTrades pair={pair} />
         </div>

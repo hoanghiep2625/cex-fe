@@ -20,7 +20,7 @@ export default function ChartPanel({ pair }: { pair: string }) {
   const [chartType, setChartType] = useState<"goc" | "tradingview" | "chitiet">(
     "goc"
   );
-  const [timeframe, setTimeframe] = useState("D");
+  const [timeframe, setTimeframe] = useState("15");
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [isDark, setIsDark] = useState(true);
 
