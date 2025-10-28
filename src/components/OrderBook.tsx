@@ -8,6 +8,8 @@ import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
 import { SymbolInfo } from "@/components/MarketHeader";
+import { useMarketData } from "@/hooks/useMarketData";
+import { useRecentTrades } from "@/hooks/useRecentTrades";
 
 const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
@@ -20,11 +22,15 @@ export default function OrderBook({
 }) {
   const [grouping, setGrouping] = useState("0.01");
   const { symbol } = useSymbol();
+
   const { setConnected } = useWebSocket(); // Get setter from context
   const { orderBook, connected } = useOrderBook(
     symbol?.code || pair.replace("_", ""),
     type || "spot"
   );
+
+  const { trades } = useRecentTrades(symbol?.code || pair.replace("_", ""));
+
   const { data } = useQuery<SymbolInfo>({
     queryKey: ["symbolInfo"],
     queryFn: () =>
@@ -32,7 +38,6 @@ export default function OrderBook({
         .get(`/symbols/code/${symbol}`)
         .then((r) => r.data?.data ?? r.data ?? []),
   });
-  console.log("dataaaaaaa", data);
 
   // Sync connected state to global context
   useEffect(() => {
@@ -108,13 +113,17 @@ export default function OrderBook({
 
         {/* Current Price - CENTER */}
         <div className="px-4 py-3 flex items-center sticky z-10 dark:bg-[#181A20] bg-white">
-          <span className="text-lg font-bold text-yellow-400">
-            {fmt(currentPrice)}
+          <span
+            className={`text-lg font-bold ${
+              trades[0]?.takerSide === "BUY" ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {fmt(Number(trades[0]?.price) || 0)}
             {""}
             <span className="text-gray-400 text-xs font-semibold">
               {" "}
               {"$"}
-              {fmt(currentPrice)}
+              {fmt(Number(trades[0]?.price) || 0)}
             </span>
           </span>
         </div>
