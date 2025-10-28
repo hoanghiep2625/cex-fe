@@ -43,7 +43,7 @@ export default function MenuBar() {
         ) : isAuthenticated ? (
           // Đã đăng nhập
           <>
-            <div className="flex items-center gap-3 px-4 py-1 border border-gray-300 dark:bg-[#181A20] bg-white rounded-md">
+            <div className="flex items-center gap-3 px-4 py-1 border border-black dark:border-white dark:bg-[#181A20] bg-white rounded-md">
               <span className="dark:text-white text-black text-sm">
                 {user?.email || user?.username}
               </span>

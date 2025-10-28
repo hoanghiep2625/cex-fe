@@ -77,12 +77,6 @@ export const usePendingOrders = (
         return null;
       }
 
-      console.log(
-        `📖 ListenKey retrieved from localStorage: ${listenKey.substring(
-          0,
-          8
-        )}...`
-      );
       return { listenKey, expiresAt };
     } catch (err) {
       console.error("Failed to get listenKey from localStorage:", err);
@@ -94,7 +88,6 @@ export const usePendingOrders = (
   const createListenKey = async (): Promise<string | null> => {
     try {
       const response = await axiosInstance.post("/user-sessions/listen-key");
-      // Response structure: { statusCode, message, data: { statusCode, message, data: { listenKey, expiresIn, expiresAt } } }
       const listenKeyData: ListenKeyData = response.data?.data?.data;
 
       if (!listenKeyData?.listenKey) {
@@ -198,12 +191,9 @@ export const usePendingOrders = (
         symbol || ""
       }`;
 
-      console.log(`🔗 Connecting WebSocket: ${wsUrl.split("?")[0]}...`);
-
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("✅ WebSocket connected");
         setLoading(false);
         setConnected(true);
         setError(null);
@@ -236,8 +226,6 @@ export const usePendingOrders = (
 
       ws.onclose = () => {
         setConnected(false);
-        console.log("🔌 WebSocket disconnected");
-        // Try to reconnect after 3 seconds
         reconnectTimerRef.current = setTimeout(() => {
           console.log("🔄 Attempting to reconnect...");
           connectWebSocket(listenKey);
@@ -262,15 +250,10 @@ export const usePendingOrders = (
 
     // Initialize connection
     const initializeConnection = async () => {
-      // Try to get listenKey from localStorage first
       const storedData = getListenKeyFromStorage();
 
       if (storedData) {
-        // Use existing listenKey from localStorage
         const { listenKey, expiresAt } = storedData;
-        console.log("🔄 Using existing listenKey from localStorage");
-
-        // Calculate remaining time until expiry
         const remainingTime = new Date(expiresAt).getTime() - Date.now();
         const refreshTime = Math.max(0, remainingTime - 300 * 1000); // Refresh 5 min before expiry
 
@@ -278,8 +261,6 @@ export const usePendingOrders = (
         scheduleRefresh(listenKey, refreshTime);
         connectWebSocket(listenKey);
       } else {
-        // Create new listenKey
-        console.log("🆕 Creating new listenKey...");
         const listenKey = await createListenKey();
         if (listenKey) {
           listenKeyRef.current = listenKey;

@@ -1,7 +1,8 @@
 "use client";
 
+import AdjustIcon from "@/components/icons/AdjustIcon";
 import { useWebSocket } from "@/context/WebSocketContext";
-import { LuArrowLeftRight, LuSignal } from "react-icons/lu";
+import { LuSignal } from "react-icons/lu";
 
 const tickers = [
   { symbol: "BTC/USDT", change: "+0.31%", price: "111,305.84" },
@@ -19,8 +20,8 @@ export default function GlobalStatusBar() {
   const connectionStatus = connected ? "Kết nối ổn định" : "Mất kết nối";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 dark:bg-[#181A20] bg-white w-full overflow-hidden py-1 z-50 border-t-2 dark:border-[#0f1119] border-gray-100">
-      <div className="flex gap-4 text-xs items-center justify-between dark:text-white text-black px-4">
+    <div className="fixed bottom-0 left-0 right-0 dark:bg-[#181A20] bg-white w-full overflow-hidden py-1 z-50 border-t-4 dark:border-[#0f1119] border-gray-100">
+      <div className="flex gap-2 text-xs items-center justify-between dark:text-white text-black px-4">
         <div
           className={`flex gap-2 items-center shrink-0 w-auto ${
             connected ? "text-green-500" : "text-gray-500"
@@ -29,12 +30,15 @@ export default function GlobalStatusBar() {
           <LuSignal />
           {connectionStatus}
         </div>
-        <div className="w-[68%] flex items-center flex-row gap-1">
-          <LuArrowLeftRight width={14} height={14} className="" />
+        <div className="w-[70%] flex items-center flex-row gap-1">
+          <AdjustIcon
+            size={16}
+            className="text-muted-foreground hover:text-foreground text-gray-400"
+          />
           <div className="overflow-hidden flex-1">
-            <div className=" animate-scroll flex gap-8 whitespace-nowrap ">
+            <div className=" animate-scroll flex gap-6 whitespace-nowrap ">
               {[...tickers, ...tickers].map((ticker, idx) => (
-                <div key={idx} className="flex items-center gap-3 shrink-0">
+                <div key={idx} className="flex items-center gap-1 shrink-0">
                   <span className="font-semibold">{ticker.symbol}</span>
                   <span
                     className={
@@ -53,7 +57,7 @@ export default function GlobalStatusBar() {
             </div>
           </div>
         </div>
-
+        <div className="text-gray-300">|</div>
         <div className="flex w-auto gap-4 justify-end ">
           <div className="cursor-pointer hover:dark:text-gray-300 hover:text-gray-500">
             Thông báo

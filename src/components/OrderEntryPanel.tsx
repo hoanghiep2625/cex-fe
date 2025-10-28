@@ -1,17 +1,32 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useBalance } from "@/hooks/useBalance";
 import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
 import { LuCircleAlert, LuPlus } from "react-icons/lu";
 import { IoMdArrowDropdown } from "react-icons/io";
-
+import { useQuery } from "@tanstack/react-query";
+export interface Balance {
+  id: string;
+  user_id: number;
+  currency: string;
+  wallet_type: string;
+  available: string;
+  locked: string;
+  created_at: string;
+  updated_at: string;
+  asset: Asset;
+}
+export interface Asset {
+  code: string;
+  precision: number;
+  created_at: string;
+}
 export default function OrderEntryPanel({
   pair,
 }: {
@@ -22,7 +37,17 @@ export default function OrderEntryPanel({
     "limit"
   );
   const { loading, isAuthenticated } = useAuth();
-  const { balances, balanceLoading, fetchBalance } = useBalance();
+  const { data, isLoading, refetch } = useQuery<Balance[]>({
+    queryKey: ["balances"],
+    queryFn: () =>
+      axiosInstance.get("/balance").then((r) => r.data?.data ?? r.data ?? []),
+    enabled: isAuthenticated && !loading,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
+  });
+  const balances = data ?? [];
+
   const { symbol } = useSymbol();
   const [activeTab, setActiveTab] = useState("spot");
   const [buyPrice, setBuyPrice] = useState("");
@@ -39,13 +64,6 @@ export default function OrderEntryPanel({
     sellPrice && sellQty
       ? (parseFloat(sellPrice) * parseFloat(sellQty)).toFixed(8)
       : "0";
-
-  // Fetch balance khi user đăng nhập
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-      fetchBalance();
-    }
-  }, [isAuthenticated, loading, fetchBalance]);
 
   // Submit buy order
   const handleBuyOrder = async () => {
@@ -74,7 +92,7 @@ export default function OrderEntryPanel({
       toast.success(`Lệnh mua thành công!`);
       setBuyPrice("");
       setBuyQty("");
-      fetchBalance(); // Refresh balance
+      refetch();
     } catch (error) {
       const errorMsg =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -113,7 +131,7 @@ export default function OrderEntryPanel({
       toast.success(`Lệnh bán thành công!`);
       setSellPrice("");
       setSellQty("");
-      fetchBalance(); // Refresh balance
+      refetch();
     } catch (error) {
       const errorMsg =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -125,7 +143,8 @@ export default function OrderEntryPanel({
     }
   };
 
-  const [baseCurrency, quoteCurrency] = pair.split("_");
+  const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
+
   const baseAssetBalance =
     balances.find((b) => b.currency === baseCurrency)?.available || "0";
   const quoteAssetBalance =
@@ -201,7 +220,7 @@ export default function OrderEntryPanel({
               <IoMdArrowDropdown className="w-4 h-4" />
             </span>
           </button>
-          <button className="dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800">
+          <button className="text-gray-400 hover:dark:text-gray-200 hover:text-gray-800">
             <LuCircleAlert width={16} height={16} />
           </button>
         </div>
@@ -250,9 +269,7 @@ export default function OrderEntryPanel({
                 </span>
                 <div className="flex items-center gap-1">
                   <span>
-                    {balanceLoading
-                      ? "-"
-                      : parseFloat(quoteAssetBalance).toFixed(8)}{" "}
+                    {isLoading ? "-" : parseFloat(quoteAssetBalance).toFixed(8)}{" "}
                     {quoteCurrency}
                   </span>
                   <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
@@ -269,7 +286,7 @@ export default function OrderEntryPanel({
                   Mua tối đa
                 </span>
                 <span>
-                  {balanceLoading
+                  {isLoading
                     ? "--"
                     : (parseFloat(quoteAssetBalance) / 100000).toFixed(8)}{" "}
                   {baseCurrency}
@@ -335,9 +352,7 @@ export default function OrderEntryPanel({
                   Khả dụng
                 </span>
                 <span>
-                  {balanceLoading
-                    ? "-"
-                    : parseFloat(baseAssetBalance).toFixed(8)}{" "}
+                  {isLoading ? "-" : parseFloat(baseAssetBalance).toFixed(8)}{" "}
                   {baseCurrency}
                 </span>
               </div>
@@ -346,7 +361,7 @@ export default function OrderEntryPanel({
                   Bán tối đa
                 </span>
                 <span>
-                  {balanceLoading
+                  {isLoading
                     ? "--"
                     : (parseFloat(baseAssetBalance) * 100000).toFixed(8)}{" "}
                   {quoteCurrency}

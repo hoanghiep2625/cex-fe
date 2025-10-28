@@ -9,30 +9,30 @@ import Link from "next/link";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
-import { LuX } from "react-icons/lu";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   const [hideOtherPairs, setHideOtherPairs] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
+  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const { orders, loading, error, connected } = usePendingOrders(
     hideOtherPairs ? pair : undefined,
     hideOtherPairs
   );
-  const [cancelingOrderId, setCancelingOrderId] = useState<string | null>(null);
+  const cancelOrder = useMutation({
+    mutationFn: (orderId: string) =>
+      axiosInstance.put(`/orders/${orderId}/cancel`),
 
-  const handleCancelOrder = async (orderId: string) => {
-    try {
-      setCancelingOrderId(orderId);
-      await axiosInstance.put(`/orders/${orderId}/cancel`);
+    onSuccess: () => {
       toast.success("Huỷ lệnh thành công");
-    } catch (err) {
-      console.error("Failed to cancel order:", err);
+      queryClient.invalidateQueries({ queryKey: ["balances"] });
+    },
+
+    onError: () => {
       toast.error("Huỷ lệnh thất bại");
-    } finally {
-      setCancelingOrderId(null);
-    }
-  };
+    },
+  });
 
   const formatPrice = (price: string | number) => {
     const num = typeof price === "string" ? parseFloat(price) : price;
@@ -127,7 +127,7 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
               </div>
             ) : loading ? (
               <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
-                ⏳ Đang tải lệnh...
+                Đang tải...
               </div>
             ) : error ? (
               <div className="text-center text-red-500 mt-10 text-xs font-semibold">
@@ -217,24 +217,23 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                         </td>
                         <td className="py-2 px-2 text-center">
                           <button
-                            onClick={() => handleCancelOrder(order.id)}
-                            disabled={cancelingOrderId === order.id}
+                            onClick={() => cancelOrder.mutate(order.id)}
+                            disabled={
+                              cancelOrder.isPending &&
+                              cancelOrder.variables === order.id
+                            }
                             className={`inline-flex items-center justify-center p-1 rounded hover:dark:bg-gray-800 hover:bg-gray-100 transition ${
-                              cancelingOrderId === order.id
+                              cancelOrder.isPending &&
+                              cancelOrder.variables === order.id
                                 ? "opacity-50 cursor-not-allowed"
-                                : "cursor-pointer"
+                                : "cursor-pointer text-red-500"
                             }`}
                             title="Huỷ lệnh"
                           >
-                            {cancelingOrderId === order.id ? (
-                              <span className="animate-spin">⏳</span>
-                            ) : (
-                              <LuX
-                                width={16}
-                                height={16}
-                                className="text-red-500"
-                              />
-                            )}
+                            {cancelOrder.isPending &&
+                            cancelOrder.variables === order.id
+                              ? "Đang huỷ..."
+                              : "Huỷ lệnh"}
                           </button>
                         </td>
                       </tr>

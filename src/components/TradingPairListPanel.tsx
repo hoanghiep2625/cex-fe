@@ -1,38 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { useSymbols } from "@/hooks/useSymbols";
 import Link from "next/link";
 import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axiosInstance";
+
+export interface Symbol {
+  id: number;
+  symbol: string;
+  base_asset: string;
+  quote_asset: string;
+  price?: number;
+  change?: number;
+}
 
 export default function TradingPairListPanel() {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const { symbols } = useSymbols(activeTab);
-
+  const { data } = useQuery({
+    queryKey: ["symbols", activeTab],
+    queryFn: () =>
+      axiosInstance
+        .get("/symbols", {
+          params: {
+            quote_asset: activeTab,
+            status: "TRADING",
+          },
+        })
+        .then((r) => {
+          const d = r.data?.data?.data;
+          return Array.isArray(d) ? d : [];
+        }),
+  });
   // Convert symbols to display format
-  const tradingPairs = symbols.map((sym) => ({
+  const tradingPairs = data?.map((sym) => ({
     name: `${sym.base_asset}/${sym.quote_asset}`,
     leverage: "5x",
-    price: Math.random() * 100, // Placeholder - would need market data
-    change: (Math.random() - 0.5) * 10, // Placeholder
+    price: Math.random() * 100,
+    change: (Math.random() - 0.5) * 10,
   }));
 
-  const filteredPairs = tradingPairs.filter((p) =>
+  const filteredPairs = tradingPairs?.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const toggleFavorite = (name: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(name)) {
-      newFavorites.delete(name);
-    } else {
-      newFavorites.add(name);
-    }
-    setFavorites(newFavorites);
-  };
 
   const tabs = ["Mới", "USDC", "USDT", "FDUSD", "BNB"];
 
@@ -84,42 +96,36 @@ export default function TradingPairListPanel() {
         <div className="sticky top-0 px-4 dark:bg-[#181A20] bg-white py-3 flex justify-between text-xs font-semibold dark:text-gray-400 text-gray-600">
           <div>Cặp</div>
           <div className="flex gap-2">
-            <div className="flex items-center gap-1 truncate whitespace-nowrap">
-              Giá gần nhất
-              <span className="text-xs">
-                <TiArrowUnsorted />
+            <div className="flex items-center justify-end gap-1">
+              <span className="truncate block max-w-[50%]" title="Giá gần nhất">
+                Giá gần nhất
               </span>
+              <TiArrowUnsorted className="text-xs" />
             </div>
+
             <div className="flex items-center gap-1">
-              / Biến động trong 24h
-              <span className="text-xs">
-                <TiArrowUnsorted />
+              <span
+                className="truncate block max-w-[120px]"
+                title="Biến động trong 24h"
+              >
+                / Biến động trong 24h
               </span>
+              <TiArrowUnsorted className="text-xs" />
             </div>
           </div>
         </div>
 
         {/* Data Rows */}
         <div className="">
-          {filteredPairs.map((p, index) => (
+          {filteredPairs?.map((p, index) => (
             <Link
               href={`/trade/${p.name.replace("/", "_")}?type=spot`}
               key={index}
             >
               <div className="px-4 py-1 flex justify-between dark:hover:bg-[#1F2329] hover:bg-gray-100 transition text-xs items-center cursor-pointer">
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleFavorite(p.name);
-                    }}
-                    className="dark:text-gray-500 text-gray-600 hover:text-yellow-500 transition"
-                  >
-                    <LuStar
-                      width={14}
-                      height={14}
-                      fill={favorites.has(p.name) ? "currentColor" : "none"}
-                    />
+                  <button className="dark:text-gray-500 text-gray-600 hover:text-yellow-500 transition">
+                    <LuStar width={14} height={14} />
                   </button>
                   <div className="flex">
                     <div className="font-semibold dark:text-white text-black">

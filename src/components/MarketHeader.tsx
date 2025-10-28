@@ -3,9 +3,18 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useMarketData } from "@/hooks/useMarketData";
-import { useSymbolInfo } from "@/hooks/useSymbolInfo";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axiosInstance";
+
+export interface SymbolInfo {
+  id: number;
+  symbol: string;
+  base_asset: string;
+  quote_asset: string;
+  name?: string;
+}
 
 export default function MarketHeader({
   pair,
@@ -20,13 +29,21 @@ export default function MarketHeader({
 
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
   const { marketData, connected } = useMarketData(symbol, type);
-  const { symbolInfo } = useSymbolInfo(symbol);
+
+  const { data } = useQuery<SymbolInfo>({
+    queryKey: ["symbolInfo"],
+    queryFn: () =>
+      axiosInstance
+        .get(`/symbols/code/${symbol}`)
+        .then((r) => r.data?.data ?? r.data ?? []),
+  });
+
   const baseAssetCode = useMemo(() => {
-    if (symbolInfo?.base_asset) {
-      return symbolInfo.base_asset.toUpperCase();
+    if (data?.base_asset) {
+      return data.base_asset.toUpperCase();
     }
     return symbol.replace("USDT", "").toUpperCase();
-  }, [symbolInfo, symbol]);
+  }, [data, symbol]);
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
