@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
 import TabUnderline from "./ui/TabUnderline";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import { fmt } from "@/components/OrderBook";
 
 export default function RecentTrades({ pair }: { pair: string }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
@@ -20,15 +21,6 @@ export default function RecentTrades({ pair }: { pair: string }) {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    });
-  };
-
-  // Format price and quantity for display
-  const formatPrice = (price: string | number) => {
-    const num = typeof price === "string" ? parseFloat(price) : price;
-    return num.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 8,
     });
   };
 
@@ -83,7 +75,7 @@ export default function RecentTrades({ pair }: { pair: string }) {
                   trade.takerSide === "BUY" ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {formatPrice(trade.price)}
+                {fmt(Number(trade.price) || 0)}
               </div>
               <div className="dark:text-white text-black text-xs text-center flex-1">
                 {formatQuantity(trade.quantity)}

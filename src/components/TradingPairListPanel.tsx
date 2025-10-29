@@ -6,6 +6,7 @@ import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
 import { useTicker } from "@/hooks/useTicker";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import { fmt } from "@/components/OrderBook";
 
 export interface Symbol {
   id: number;
@@ -27,7 +28,7 @@ export default function TradingPairListPanel() {
   const tradingPairs = tickers?.map((sym) => ({
     name: `${sym.base_asset}/${sym.quote_asset}`,
     leverage: "5x",
-    price: sym.price || 0,
+    price: fmt(sym.price) || 0,
     change: sym.priceChangePercent24h || 0,
   }));
 
