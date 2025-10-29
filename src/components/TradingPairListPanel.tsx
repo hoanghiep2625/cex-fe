@@ -4,8 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/lib/axiosInstance";
+import { useTicker } from "@/hooks/useTicker";
 
 export interface Symbol {
   id: number;
@@ -19,27 +18,16 @@ export interface Symbol {
 export default function TradingPairListPanel() {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
-  const { data } = useQuery({
-    queryKey: ["symbols", activeTab],
-    queryFn: () =>
-      axiosInstance
-        .get("/symbols", {
-          params: {
-            quote_asset: activeTab,
-            status: "TRADING",
-          },
-        })
-        .then((r) => {
-          const d = r.data?.data?.data;
-          return Array.isArray(d) ? d : [];
-        }),
-  });
-  // Convert symbols to display format
-  const tradingPairs = data?.map((sym) => ({
+
+  // Use WebSocket ticker instead of polling
+  const { tickers, connected } = useTicker(activeTab, "spot");
+
+  // Convert tickers to display format
+  const tradingPairs = tickers?.map((sym) => ({
     name: `${sym.base_asset}/${sym.quote_asset}`,
     leverage: "5x",
-    price: Math.random() * 100,
-    change: (Math.random() - 0.5) * 10,
+    price: sym.price || 0,
+    change: sym.priceChangePercent24h || 0,
   }));
 
   const filteredPairs = tradingPairs?.filter((p) =>

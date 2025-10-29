@@ -7,6 +7,8 @@ import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axiosInstance";
+import { fmt } from "@/components/OrderBook";
+import { useRecentTrades } from "@/hooks/useRecentTrades";
 
 export interface SymbolInfo {
   id: number;
@@ -29,7 +31,7 @@ export default function MarketHeader({
 
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
   const { marketData, connected } = useMarketData(symbol, type);
-
+  const { trades } = useRecentTrades(symbol);
   const { data } = useQuery<SymbolInfo>({
     queryKey: ["symbolInfo"],
     queryFn: () =>
@@ -112,18 +114,17 @@ export default function MarketHeader({
         {/* Price Display */}
         {marketData && (
           <div className="flex flex-col">
-            <span className="text-green-400 text-xl font-bold">
-              {(marketData?.price || 0)?.toLocaleString("vi-VN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+            <span
+              className={`text-xl font-bold ${
+                trades[0]?.takerSide === "BUY"
+                  ? "text-green-400"
+                  : "text-red-400"
+              }`}
+            >
+              {fmt(marketData?.price || 0)}
             </span>
             <span className="dark:text-white text-black text-[12px] font-semibold">
-              $
-              {(marketData?.price || 0)?.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              ${fmt(marketData?.price || 0)}
             </span>
           </div>
         )}

@@ -8,10 +8,14 @@ import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
 import { SymbolInfo } from "@/components/MarketHeader";
-import { useMarketData } from "@/hooks/useMarketData";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
 
-const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+export const fmt = (n: number) => {
+  // EU/VN format: 100.000,00 (dấu chấm ngăn nghìn, dấu phẩy thập phân)
+  const [integer, decimal] = n.toFixed(2).split(".");
+  const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${formattedInteger},${decimal}`;
+};
 
 export default function OrderBook({
   pair,
