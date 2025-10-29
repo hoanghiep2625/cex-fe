@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
 import { useTicker } from "@/hooks/useTicker";
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 
 export interface Symbol {
   id: number;
@@ -37,7 +38,7 @@ export default function TradingPairListPanel() {
   const tabs = ["Mới", "USDC", "USDT", "FDUSD", "BNB"];
 
   return (
-    <div className="h-[50%] dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col overflow-hidden">
+    <div className="relative h-[50%] dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col overflow-hidden">
       {/* Search Section */}
       <div className="pt-4 dark:border-b dark:border-[#181A20] border-b border-gray-200">
         <div className="relative mb-3 px-4 text-xs font-semibold">
@@ -145,6 +146,7 @@ export default function TradingPairListPanel() {
           ))}
         </div>
       </div>
+      <ConnectionStatus connected={connected} />
     </div>
   );
 }

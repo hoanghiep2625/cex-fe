@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance";
 
 export interface PendingOrder {
@@ -175,69 +175,97 @@ export const usePendingOrders = (
     }, refreshTime);
   };
 
-  // Function to connect WebSocket
-  const connectWebSocket = (listenKey: string) => {
-    try {
-      // Close existing connection
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const baseUrl =
-        process.env.NEXT_PUBLIC_WS_URL ||
-        `${protocol}://api-cex.tahoanghiep.com`;
-      const wsUrl = `${baseUrl}/ws/orders?listenKey=${listenKey}&symbol=${
-        symbol || ""
-      }`;
-
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        setLoading(false);
-        setConnected(true);
-        setError(null);
-      };
-
-      ws.onmessage = ({ data }: MessageEvent) => {
-        try {
-          const msg = JSON.parse(data);
-
-          if (msg.action === "pending_orders" && Array.isArray(msg.orders)) {
-            let filteredOrders = msg.orders;
-
-            if (hideOtherPairs && symbol) {
-              filteredOrders = filteredOrders.filter(
-                (order: PendingOrder) => order.symbol === symbol
-              );
-            }
-
-            setOrders(filteredOrders);
-          }
-        } catch (err) {
-          console.error("Failed to parse pending orders message:", err);
+  // Function to connect WebSocket with exponential backoff
+  const connectWebSocket = useCallback(
+    (listenKey: string, reconnectAttempt: number = 0) => {
+      try {
+        // Close existing connection
+        if (wsRef.current) {
+          wsRef.current.close();
         }
-      };
 
-      ws.onerror = (event) => {
-        console.error("❌ WebSocket error:", event);
-        setError("WebSocket connection error");
-      };
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const baseUrl =
+          process.env.NEXT_PUBLIC_WS_URL ||
+          `${protocol}://api-cex.tahoanghiep.com`;
+        const wsUrl = `${baseUrl}/ws/orders?listenKey=${listenKey}&symbol=${
+          symbol || ""
+        }`;
 
-      ws.onclose = () => {
-        setConnected(false);
-        reconnectTimerRef.current = setTimeout(() => {
-          console.log("🔄 Attempting to reconnect...");
-          connectWebSocket(listenKey);
-        }, 3000);
-      };
+        console.log(`🔗 Connecting to PendingOrders WebSocket: ${wsUrl}`);
+        const ws = new WebSocket(wsUrl);
 
-      wsRef.current = ws;
-    } catch (err) {
-      console.error("Failed to connect WebSocket:", err);
-      setError("Failed to connect WebSocket");
-    }
-  };
+        ws.onopen = () => {
+          console.log("✅ PendingOrders WebSocket connected");
+          setLoading(false);
+          setConnected(true);
+          setError(null);
+        };
+
+        ws.onmessage = ({ data }: MessageEvent) => {
+          try {
+            const msg = JSON.parse(data);
+
+            if (msg.action === "pending_orders" && Array.isArray(msg.orders)) {
+              let filteredOrders = msg.orders;
+
+              if (hideOtherPairs && symbol) {
+                filteredOrders = filteredOrders.filter(
+                  (order: PendingOrder) => order.symbol === symbol
+                );
+              }
+
+              setOrders(filteredOrders);
+
+              if (msg.timestamp) {
+                console.log(
+                  `📊 PendingOrders update: ${filteredOrders.length} orders`
+                );
+              }
+            }
+          } catch (err) {
+            console.error("❌ Failed to parse pending orders message:", err);
+            setError("Failed to parse orders data");
+          }
+        };
+
+        ws.onerror = (event) => {
+          console.error("❌ WebSocket error:", event);
+          setError("WebSocket connection error");
+        };
+
+        ws.onclose = () => {
+          console.log("🔌 PendingOrders WebSocket disconnected");
+          setConnected(false);
+
+          // Auto-reconnect with exponential backoff
+          const maxAttempts = 5;
+          const baseDelay = 1000;
+
+          if (reconnectAttempt < maxAttempts) {
+            const delay = baseDelay * Math.pow(2, reconnectAttempt);
+            console.log(
+              `🔄 Reconnecting in ${delay}ms (attempt ${
+                reconnectAttempt + 1
+              }/${maxAttempts})...`
+            );
+
+            reconnectTimerRef.current = setTimeout(() => {
+              connectWebSocket(listenKey, reconnectAttempt + 1);
+            }, delay);
+          } else {
+            setError("Failed to connect after multiple attempts");
+          }
+        };
+
+        wsRef.current = ws;
+      } catch (err) {
+        console.error("❌ Failed to connect WebSocket:", err);
+        setError("Failed to connect WebSocket");
+      }
+    },
+    [symbol, hideOtherPairs]
+  );
 
   useEffect(() => {
     // Only initialize if user is authenticated (has token)
