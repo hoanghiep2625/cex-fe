@@ -24,7 +24,7 @@ export default function RootLayout({
           <WebSocketProvider>
             <SymbolProvider>
               <Toaster position="bottom-right" />
-              {children}
+              <div className="max-w-[1920px] mx-auto">{children}</div>
             </SymbolProvider>
           </WebSocketProvider>
         </ClientLayout>

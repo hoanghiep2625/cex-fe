@@ -10,7 +10,7 @@ export default function ConnectionStatus({
   className = "",
 }: ConnectionStatusProps) {
   return (
-    <div className={`ml-2 absolute z-999 right-0.5 top-0.5 ${className}`}>
+    <div className={`ml-2 absolute z-10 right-0.5 top-0.5 ${className}`}>
       {connected ? (
         <span className="text-green-400" title="Connection">
           <RxDotFilled />
