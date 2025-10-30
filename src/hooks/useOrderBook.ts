@@ -1,14 +1,26 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
 export interface OrderBookData {
-  asks: Array<{ price: number; quantity: number; total: number }>;
-  bids: Array<{ price: number; quantity: number; total: number }>;
+  asks: Array<{
+    price: number;
+    quantity: number;
+    total: number;
+    percentage: number;
+  }>;
+  bids: Array<{
+    price: number;
+    quantity: number;
+    total: number;
+    percentage: number;
+  }>;
   currentPrice: number;
 }
 
 interface BackendLevel {
   price: string;
   quantity: string;
+  total: number;
+  percentage: number;
 }
 
 interface BackendOrderBook {
@@ -68,15 +80,11 @@ export const useOrderBook = (
           if (hash === hashRef.current) return;
           hashRef.current = hash;
 
-          interface Level {
-            price: string;
-            quantity: string;
-          }
-
-          const parseLevel = (p: Level) => ({
+          const parseLevel = (p: BackendLevel) => ({
             price: +p.price,
             quantity: +p.quantity,
-            total: +p.price * +p.quantity,
+            total: p.total || +p.price * +p.quantity,
+            percentage: p.percentage || 0,
           });
 
           const { asks, bids } = msg.orderBook;

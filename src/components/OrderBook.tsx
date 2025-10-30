@@ -48,7 +48,7 @@ export default function OrderBook({
     setConnected(connected);
   }, [connected, setConnected]);
 
-  const { asks = [], bids = [], currentPrice = 0 } = orderBook || {};
+  const { asks = [], bids = [] } = orderBook || {};
   const totalBids = bids.reduce((s, b) => s + b.quantity, 0);
   const totalAsks = asks.reduce((s, a) => s + a.quantity, 0);
   const buyPct = (totalBids / (totalBids + totalAsks)) * 100 || 0;
@@ -57,18 +57,23 @@ export default function OrderBook({
     price: number;
     quantity: number;
     total: number;
+    percentage: number;
   }
 
   const Row = ({ level, isAsk }: { level: Level; isAsk?: boolean }) => (
     <div
       className={`px-4 py-0.5 grid grid-cols-3 gap-4 relative text-xs hover:dark:bg-gray-800/50 hover:bg-gray-100/50`}
     >
+      {/* Background bars for each column */}
       <div
-        className={`absolute inset-0 ${
-          isAsk ? "bg-red-900/5" : "bg-green-900/5"
-        } right-0`}
-        style={{ width: isAsk ? "30%" : "40%" }}
+        className={`absolute inset-y-0 right-0 ${
+          isAsk
+            ? "bg-[#FBE9EB] dark:bg-[#2F1E26]"
+            : "bg-[#EAF8F2] dark:bg-[#1B2A2A]"
+        }`}
+        style={{ width: `${level.percentage}%` }}
       />
+
       <span
         className={`relative z-10 ${isAsk ? "text-red-400" : "text-green-400"}`}
       >
