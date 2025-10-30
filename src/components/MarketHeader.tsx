@@ -37,9 +37,7 @@ export default function MarketHeader({
   const { data } = useQuery<SymbolInfo>({
     queryKey: ["symbolInfo"],
     queryFn: () =>
-      axiosInstance
-        .get(`/symbols/code/${symbol}`)
-        .then((r) => r.data?.data ?? r.data ?? []),
+      axiosInstance.get(`/symbols/code/${symbol}`).then((r) => r.data?.data),
   });
 
   const baseAssetCode = useMemo(() => {
@@ -110,7 +108,9 @@ export default function MarketHeader({
           </div>
           <div className="pr-2">
             <div className="text-[20px] leading-5 text-black dark:text-white font-medium">
-              {data?.base_asset || "BTC" + "/" + (data?.quote_asset || "USDT")}
+              {(data?.base_asset || "BTC") +
+                "/" +
+                (data?.quote_asset || "USDT")}
             </div>
             <div className="text-[12px] text-[#9c9c9c] dark:text-white flex gap-1 items-center">
               <Link
