@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createChart, CandlestickSeries, ColorType } from "lightweight-charts";
+import {
+  createChart,
+  CandlestickSeries,
+  HistogramSeries,
+  ColorType,
+} from "lightweight-charts";
 import type {
   IChartApi,
   ISeriesApi,
   CandlestickData,
+  HistogramData,
 } from "lightweight-charts";
 import { Candle } from "@/hooks/useCandles";
 
@@ -21,6 +27,7 @@ export default function CandlestickChart({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const hasInitialFit = useRef(false); // Track if we've done initial fitContent
 
   useEffect(() => {
@@ -53,15 +60,42 @@ export default function CandlestickChart({
 
     // Add candlestick series (v5 API - theo docs example)
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#22C55E",
-      downColor: "#EF4444",
+      upColor: "#26A69A",
+      downColor: "#EF5350",
       borderVisible: false,
-      wickUpColor: "#22C55E",
-      wickDownColor: "#EF4444",
+      wickUpColor: "#26A69A",
+      wickDownColor: "#EF5350",
+    });
+
+    // Set price scale for candlestick - takes top 70%
+    candlestickSeries.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.05,
+        bottom: 0.2, // Leave space for volume
+      },
+    });
+
+    // Add volume series on same chart
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: {
+        type: "volume",
+      },
+      priceScaleId: "volume", // Create separate scale for volume with ID
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+
+    // Configure volume price scale on right side
+    chart.priceScale("volume").applyOptions({
+      scaleMargins: {
+        top: 0.8,
+        bottom: 0,
+      },
     });
 
     chartRef.current = chart;
     candlestickSeriesRef.current = candlestickSeries;
+    volumeSeriesRef.current = volumeSeries;
     hasInitialFit.current = false; // Reset fit flag when chart is recreated
 
     // Handle resize
@@ -84,9 +118,14 @@ export default function CandlestickChart({
 
   // Update candle data
   useEffect(() => {
-    if (!candlestickSeriesRef.current || candles.length === 0) return;
+    if (
+      !candlestickSeriesRef.current ||
+      !volumeSeriesRef.current ||
+      candles.length === 0
+    )
+      return;
 
-    const data: CandlestickData[] = candles.map((candle) => ({
+    const candleData: CandlestickData[] = candles.map((candle) => ({
       time: Math.floor(candle.open_time / 1000) as CandlestickData["time"], // Convert ms to seconds
       open: parseFloat(candle.open),
       high: parseFloat(candle.high),
@@ -94,7 +133,19 @@ export default function CandlestickChart({
       close: parseFloat(candle.close),
     }));
 
-    candlestickSeriesRef.current.setData(data);
+    const volumeData: HistogramData[] = candles.map((candle) => {
+      const open = parseFloat(candle.open);
+      const close = parseFloat(candle.close);
+      return {
+        time: Math.floor(candle.open_time / 1000) as HistogramData["time"],
+        value: parseFloat(candle.volume),
+        color:
+          close >= open ? "rgba(38, 166, 154, 0.5)" : "rgba(239, 83, 80, 0.5)",
+      };
+    });
+
+    candlestickSeriesRef.current.setData(candleData);
+    volumeSeriesRef.current.setData(volumeData);
 
     // Only fitContent on initial load, not on updates (to preserve zoom/pan)
     if (chartRef.current && !hasInitialFit.current) {

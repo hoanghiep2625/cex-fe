@@ -89,7 +89,7 @@ export default function OrderBook({
   );
 
   return (
-    <div className="flex-1 dark:bg-[#181A20] bg-white rounded-[10px] text-white flex flex-col relative">
+    <div className="w-[30%] dark:bg-[#181A20] bg-white rounded-[10px] text-white flex flex-col relative">
       <div className="px-4 py-3 border-b dark:border-gray-700 border-gray-300 flex justify-between">
         <span className="text-sm font-semibold dark:text-white text-black">
           Sổ lệnh

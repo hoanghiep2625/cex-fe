@@ -61,37 +61,59 @@ export default function MarketHeader({
   };
 
   useEffect(() => {
+    const interval = setTimeout(() => {
+      checkScroll();
+    }, 300); // chờ DOM render xong
+
     const container = scrollContainerRef.current;
     if (container) {
-      checkScroll();
       container.addEventListener("scroll", checkScroll);
       window.addEventListener("resize", checkScroll);
-      return () => {
-        container.removeEventListener("scroll", checkScroll);
-        window.removeEventListener("resize", checkScroll);
-      };
     }
+    return () => {
+      clearTimeout(interval);
+      container?.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
   }, []);
 
   const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 300;
-      scrollContainerRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-      setTimeout(checkScroll, 300);
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const scrollAmount = 300;
+    const current = container.scrollLeft;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const next =
+      direction === "left" ? current - scrollAmount : current + scrollAmount;
+
+    // Cập nhật trước để mũi tên biến mất ngay lập tức
+    if (direction === "left") {
+      setCanScrollRight(true);
+      setCanScrollLeft(next > 0);
+    } else {
+      setCanScrollLeft(true);
+      setCanScrollRight(next < maxScroll);
     }
+
+    // Cuộn thật
+    container.scrollTo({
+      left: next,
+      behavior: "smooth",
+    });
+
+    // Kiểm tra lại sau khi scroll smooth xong để đồng bộ chính xác
+    setTimeout(checkScroll, 400);
   };
 
   return (
-    <div className="relative h-14 bg-white dark:bg-[#181A20] rounded-lg flex pl-4">
-      <div className="flex gap-2 text-[#9c9c9c] items-center">
-        <div className="flex justify-center items-center mr-1 border rounded-lg dark:border-gray-600 border-gray-300 w-6 h-6">
-          <CiStar className="text-[20px]  dark:border-gray-600" />
+    <div className="h-[56px] bg-white dark:bg-[#181A20] rounded-[8px] flex px-[16px]">
+      <div className="w-[280px] flex gap-[8px] text-[#9c9c9c]">
+        <div className="flex justify-center items-center mr-[4px]">
+          <CiStar className="text-[24px] border rounded-[8px] dark:border-gray-600 border-gray-200" />
         </div>
-        <div className="flex justify-center items-center gap-2">
-          <div className="w-6 h-6">
+        <div className="flex justify-center items-center gap-[8px]">
+          <div className="">
             <Image
               key={baseAssetCode}
               src={
@@ -106,16 +128,16 @@ export default function MarketHeader({
               unoptimized
             />
           </div>
-          <div className="pr-2">
-            <div className="text-[20px] leading-5 text-black dark:text-white font-medium">
+          <div className="pr-[8px]">
+            <div className="text-[20px] leading-[20px] text-black dark:text-white font-[500]">
               {(data?.base_asset || "BTC") +
                 "/" +
                 (data?.quote_asset || "USDT")}
             </div>
-            <div className="text-[12px] text-[#9c9c9c] dark:text-white flex gap-1 items-center">
+            <div className="text-[12px] text-[#9c9c9c] flex gap-[4px] items-center">
               <Link
                 href={`/price/${baseAssetCode}`}
-                className="font-normal text-[#9c9c9c] dark:text-gray-400"
+                className="font-[400] text-[#9c9c9c]"
               >
                 Giá {marketData?.name}
               </Link>
@@ -123,8 +145,8 @@ export default function MarketHeader({
             </div>
           </div>
         </div>
-        <div className="flex justify-center flex-col items-start">
-          <div className="text-[20px] text-[#2EBD85] font-medium leading-5">
+        <div className="flex justify-center items-center flex-col items-start">
+          <div className="text-[20px] text-[#2EBD85] font-[500] leading-[20px]">
             {fmt(marketData?.price || 0)}
           </div>
           <div className="text-[12px] text-black dark:text-white">
@@ -132,32 +154,32 @@ export default function MarketHeader({
           </div>
         </div>
       </div>
-      <div className="w-[810px] flex px-4 relative justify-center items-center">
+      <div className="flex-1 flex px-[16px] relative justify-center items-center">
         <button
           onClick={() => scroll("left")}
           className={`absolute left-0 flex items-center justify-center w-6 h-8 rounded z-30 transition-opacity duration-200
     ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
-          <LuChevronLeft className="text-gray-400 hover:text-black" />
+          <LuChevronLeft className="text-gray-400 hover:text-black dark:hover:text-white" />
         </button>
         {/* Left Fade Gradient */}
         <div
-          className={`absolute left-2.5 top-0 w-10 h-full bg-gradient-to-r dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-20
+          className={`absolute left-[10px] top-0 w-[40px] h-full bg-gradient-to-r dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-20
   ${canScrollLeft ? "opacity-100" : "opacity-0"}`}
         />
 
         {/* Right Fade Gradient */}
         <div
-          className={`absolute right-2.5 top-0 w-10 h-full bg-gradient-to-l dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-20
+          className={`absolute right-[15px] top-0 w-[40px] h-full bg-gradient-to-l dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-20
   ${canScrollRight ? "opacity-100" : "opacity-0"}`}
         />
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-hidden flex-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 overflow-x-hidden flex-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          <div className="flex gap-4 text-[12px]">
+          <div className="flex gap-[16px] text-[12px]">
             <div className="flex  flex-col justify-center">
-              <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+              <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
                 Biến động trong 24 giờ
               </div>
               <div className="text-[#F6465D]">
@@ -176,73 +198,65 @@ export default function MarketHeader({
               </div>
             </div>
             <div className="flex  flex-col justify-center">
-              <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+              <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
                 Giá cao nhất 24h
               </div>
               <div className="">
-                <span className="text-[12px] font-semibold">
-                  {(marketData?.highPrice24h || 0)?.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
+                {(marketData?.highPrice24h || 0)?.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
             </div>
             <div className="flex  flex-col justify-center">
-              <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+              <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
                 Giá thấp nhất 24h
               </div>
               <div className="">
-                <span className="text-[12px] font-semibold">
-                  {(marketData?.lowPrice24h || 0)?.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
+                {(marketData?.lowPrice24h || 0)?.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
             </div>
             <div className="flex  flex-col justify-center">
-              <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+              <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
                 KL 24h({data?.base_asset || "BTC"})
               </div>
               <div className="">
-                <span className="text-[12px] font-semibold">
-                  {(marketData?.volume24h || 0)?.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
+                {(marketData?.volume24h || 0)?.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
             </div>
             <div className="flex  flex-col justify-center">
-              <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+              <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
                 KL 24h({data?.quote_asset || "USDT"})
               </div>
               <div className="">
-                <span className=" text-[12px] font-semibold">
-                  {(marketData?.quoteAssetVolume24h || 0)?.toLocaleString(
-                    "en-US",
-                    {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }
-                  )}
-                </span>
+                {(marketData?.quoteAssetVolume24h || 0)?.toLocaleString(
+                  "en-US",
+                  {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  }
+                )}
               </div>
             </div>
             <div className="flex flex-col justify-center">
-              <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+              <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
                 Mạng lưới
               </div>
               <hr className="border border-t-0 border-dashed border-[#9c9c9c] " />
               <div>BTC (5)</div>
             </div>
           </div>
-          <div className="flex flex-col justify-center text-[12px] w-[200px] shrink-0">
-            <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
+          <div className="flex flex-col justify-center text-[12px] w-[120px] shrink-0">
+            <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
               Thẻ token
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-[4px]">
               <Link href={"#"} className="text-[#D89F00] whitespace-nowrap">
                 POW
               </Link>
