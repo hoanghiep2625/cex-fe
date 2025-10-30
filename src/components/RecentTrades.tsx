@@ -68,19 +68,19 @@ export default function RecentTrades({ pair }: { pair: string }) {
           {trades.map((trade) => (
             <div
               key={trade.id}
-              className="px-4 py-0.5 flex justify-between gap-2 text-xs dark:hover:bg-[#1F2329] hover:bg-gray-100 transition"
+              className="px-4 py-0.5 flex justify-between gap-2 text-xs transition cursor-pointer"
             >
               <div
-                className={`font-semibold text-xs flex-1 ${
+                className={`font-medium text-xs flex-1 ${
                   trade.takerSide === "BUY" ? "text-green-400" : "text-red-400"
                 }`}
               >
                 {fmt(Number(trade.price) || 0)}
               </div>
-              <div className="dark:text-white text-black text-xs text-center flex-1">
+              <div className="dark:text-white text-black text-xs font-medium text-center flex-1">
                 {formatQuantity(trade.quantity)}
               </div>
-              <div className="dark:text-white text-black text-xs text-right flex-1">
+              <div className="dark:text-white text-black text-xs font-medium text-right flex-1">
                 {formatTime(trade.time)}
               </div>
             </div>

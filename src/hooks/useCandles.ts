@@ -43,6 +43,7 @@ export const useCandles = ({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const shouldConnectRef = useRef(true);
 
   const connect = useCallback(() => {
     // Cleanup existing connection
@@ -104,6 +105,12 @@ export const useCandles = ({
       console.log(`🔌 Candles WebSocket disconnected for ${symbol}`);
       setConnected(false);
 
+      // Only reconnect if shouldConnectRef is true
+      if (!shouldConnectRef.current) {
+        console.log("🚫 Reconnect disabled, not reconnecting");
+        return;
+      }
+
       // Auto-reconnect with exponential backoff
       const maxAttempts = 5;
       const baseDelay = 1000;
@@ -130,6 +137,7 @@ export const useCandles = ({
 
   useEffect(() => {
     if (!enabled || !symbol || !interval) {
+      shouldConnectRef.current = false;
       setLoading(false);
       setConnected(false);
       // Close existing connection if disabled
@@ -141,9 +149,12 @@ export const useCandles = ({
       return;
     }
 
+    shouldConnectRef.current = true;
     connect();
 
     return () => {
+      // Disable reconnect on cleanup
+      shouldConnectRef.current = false;
       // Cleanup
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

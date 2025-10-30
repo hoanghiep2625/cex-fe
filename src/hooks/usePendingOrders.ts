@@ -39,6 +39,7 @@ export const usePendingOrders = (
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [connected, setConnected] = useState(false);
+  const shouldConnectRef = useRef(true);
 
   // Function to save listenKey to localStorage
   const saveListenKeyToStorage = (
@@ -238,6 +239,11 @@ export const usePendingOrders = (
           console.log("🔌 PendingOrders WebSocket disconnected");
           setConnected(false);
 
+          if (!shouldConnectRef.current) {
+            console.log("🚫 Reconnect disabled, not reconnecting");
+            return;
+          }
+
           // Auto-reconnect with exponential backoff
           const maxAttempts = 5;
           const baseDelay = 1000;
@@ -271,10 +277,13 @@ export const usePendingOrders = (
     // Only initialize if user is authenticated (has token)
     const token = localStorage.getItem("accessToken");
     if (!token) {
+      shouldConnectRef.current = false;
       setError("Not authenticated");
       setLoading(false);
       return;
     }
+
+    shouldConnectRef.current = true;
 
     // Initialize connection
     const initializeConnection = async () => {
@@ -301,6 +310,7 @@ export const usePendingOrders = (
 
     // Cleanup on unmount
     return () => {
+      shouldConnectRef.current = false;
       if (wsRef.current) {
         wsRef.current.close();
       }

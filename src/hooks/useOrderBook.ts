@@ -44,6 +44,7 @@ export const useOrderBook = (
   const hashRef = useRef("");
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const shouldConnectRef = useRef(true);
 
   const connect = useCallback(() => {
     // Cleanup existing connection
@@ -118,6 +119,12 @@ export const useOrderBook = (
       console.log(`🔌 OrderBook WebSocket disconnected for ${symbol}`);
       setConnected(false);
 
+      // Only reconnect if shouldConnectRef is true
+      if (!shouldConnectRef.current) {
+        console.log("🚫 Reconnect disabled, not reconnecting");
+        return;
+      }
+
       // Auto-reconnect with exponential backoff
       const maxAttempts = 5;
       const baseDelay = 1000;
@@ -143,9 +150,12 @@ export const useOrderBook = (
   }, [symbol, type]);
 
   useEffect(() => {
+    shouldConnectRef.current = true;
     connect();
 
     return () => {
+      // Disable reconnect on cleanup
+      shouldConnectRef.current = false;
       // Cleanup
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

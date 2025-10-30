@@ -28,7 +28,7 @@ export default function TradingPairListPanel() {
   const tradingPairs = tickers?.map((sym) => ({
     name: `${sym.base_asset}/${sym.quote_asset}`,
     leverage: "5x",
-    price: fmt(sym.price) || 0,
+    price: sym.price || 0,
     change: sym.priceChangePercent24h || 0,
   }));
 
@@ -127,14 +127,11 @@ export default function TradingPairListPanel() {
                   </div>
                 </div>
                 <div className="flex gap-8">
-                  <div className="font-semibold dark:text-white text-black text-right">
-                    {p.price.toLocaleString("en-US", {
-                      minimumFractionDigits: 4,
-                      maximumFractionDigits: 4,
-                    })}
+                  <div className="font-medium dark:text-white text-black text-right">
+                    {fmt(p.price)}
                   </div>
                   <div
-                    className={`font-semibold w-14 text-right ${
+                    className={`font-medium w-14 text-right ${
                       p.change > 0 ? "text-green-400" : "text-red-400"
                     }`}
                   >

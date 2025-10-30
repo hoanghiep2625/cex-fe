@@ -25,6 +25,7 @@ export const useRecentTrades = (symbol: string = "BTCUSDT") => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const shouldConnectRef = useRef(true);
 
   const connect = useCallback(() => {
     // Cleanup existing connection
@@ -76,6 +77,11 @@ export const useRecentTrades = (symbol: string = "BTCUSDT") => {
       console.log(`🔌 RecentTrades WebSocket disconnected for ${symbol}`);
       setConnected(false);
 
+      if (!shouldConnectRef.current) {
+        console.log("🚫 Reconnect disabled, not reconnecting");
+        return;
+      }
+
       // Auto-reconnect with exponential backoff
       const maxAttempts = 5;
       const baseDelay = 1000;
@@ -101,9 +107,11 @@ export const useRecentTrades = (symbol: string = "BTCUSDT") => {
   }, [symbol]);
 
   useEffect(() => {
+    shouldConnectRef.current = true;
     connect();
 
     return () => {
+      shouldConnectRef.current = false;
       // Cleanup
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

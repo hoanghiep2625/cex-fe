@@ -30,6 +30,7 @@ export default function CandlestickChart({
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const hasInitialFit = useRef(false); // Track if we've done initial fitContent
 
+  // Create chart once
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -60,11 +61,11 @@ export default function CandlestickChart({
 
     // Add candlestick series (v5 API - theo docs example)
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#26A69A",
-      downColor: "#EF5350",
+      upColor: "#2dbd86",
+      downColor: "#f5475e",
       borderVisible: false,
-      wickUpColor: "#26A69A",
-      wickDownColor: "#EF5350",
+      wickUpColor: "#2dbd86",
+      wickDownColor: "#f5475e",
     });
 
     // Set price scale for candlestick - takes top 70%
@@ -114,6 +115,31 @@ export default function CandlestickChart({
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
+  }, []); // Only create once
+
+  // Update theme when isDark changes
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    chartRef.current.applyOptions({
+      layout: {
+        textColor: isDark ? "#9CA3AF" : "#6B7280",
+        background: {
+          type: ColorType.Solid,
+          color: isDark ? "#181A20" : "#ffffff",
+        },
+      },
+      grid: {
+        vertLines: { color: isDark ? "#2A2E39" : "#E5E7EB" },
+        horzLines: { color: isDark ? "#2A2E39" : "#E5E7EB" },
+      },
+      timeScale: {
+        borderColor: isDark ? "#2A2E39" : "#E5E7EB",
+      },
+      rightPriceScale: {
+        borderColor: isDark ? "#2A2E39" : "#E5E7EB",
+      },
+    });
   }, [isDark]);
 
   // Update candle data
@@ -140,7 +166,7 @@ export default function CandlestickChart({
         time: Math.floor(candle.open_time / 1000) as HistogramData["time"],
         value: parseFloat(candle.volume),
         color:
-          close >= open ? "rgba(38, 166, 154, 0.5)" : "rgba(239, 83, 80, 0.5)",
+          close >= open ? "rgba(45, 189, 134, 0.5)" : "rgba(245, 71, 94, 0.5)",
       };
     });
 
