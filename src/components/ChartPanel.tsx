@@ -5,6 +5,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import CandlestickChart from "@/components/CandlestickChart";
 import { useCandles } from "@/hooks/useCandles";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import { Bars } from "react-loader-spinner";
 
 interface TradingViewWindow extends Window {
   TradingView?: {
@@ -252,11 +253,15 @@ export default function ChartPanel({ pair }: { pair: string }) {
               <div className="w-full h-full">
                 {loading ? (
                   <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600">
-                    Đang tải dữ liệu...
-                  </div>
-                ) : candles.length === 0 ? (
-                  <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600">
-                    Chưa có dữ liệu nến
+                    <Bars
+                      height="25"
+                      width="30"
+                      color="#F0B90B"
+                      ariaLabel="bars-loading"
+                      wrapperStyle={{}}
+                      wrapperClass=""
+                      visible={true}
+                    />
                   </div>
                 ) : (
                   <CandlestickChart candles={candles} isDark={isDark} />
