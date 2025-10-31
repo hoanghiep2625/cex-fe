@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useOrderBook } from "@/hooks/useOrderBook";
 import { useSymbol } from "@/context/SymbolContext";
-import { useWebSocket } from "@/context/WebSocketContext";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +10,7 @@ import { SymbolInfo } from "@/components/MarketHeader";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
 import { FaArrowUpLong, FaArrowDownLong } from "react-icons/fa6";
 import { PiApproximateEqualsBold } from "react-icons/pi";
+import { LuChevronRight } from "react-icons/lu";
 
 export const fmt = (n: number) => {
   // EU/VN format: 100.000,00 (dấu chấm ngăn nghìn, dấu phẩy thập phân)
@@ -31,7 +31,6 @@ export default function OrderBook({
   const [hoveredBidIndex, setHoveredBidIndex] = useState<number | null>(null);
   const { symbol } = useSymbol();
 
-  const { setConnected } = useWebSocket(); // Get setter from context
   const { orderBook, connected } = useOrderBook(
     symbol?.code || pair.replace("_", ""),
     type || "spot"
@@ -46,11 +45,6 @@ export default function OrderBook({
         .get(`/symbols/code/${symbol?.code || pair.replace("_", "")}`)
         .then((r) => r.data?.data ?? r.data ?? []),
   });
-
-  // Sync connected state to global context
-  useEffect(() => {
-    setConnected(connected);
-  }, [connected, setConnected]);
 
   const { asks = [], bids = [] } = orderBook || {};
   const totalBids = bids.reduce((s, b) => s + b.quantity, 0);
@@ -180,10 +174,8 @@ export default function OrderBook({
       </div>
 
       <div className="flex-1 flex flex-col dark:text-white text-black relative">
-        {/* ASKS - Scroll to bottom */}
         <div className="flex-1 flex flex-col-reverse font-medium">
           {asks.map((a, i) => {
-            // Highlight từ row 0 (gần CENTER nhất) đến row được hover
             const isHighlighted =
               hoveredAskIndex !== null && i <= hoveredAskIndex;
             const isDirectHover = hoveredAskIndex === i;
@@ -201,24 +193,30 @@ export default function OrderBook({
         </div>
 
         {/* Current Price - CENTER */}
-        <div className="px-4 py-3 flex items-center gap-2 z-10 dark:bg-[#181A20] bg-white">
-          <span
-            className={`text-lg font-semibold flex items-center  ${
-              trades[0]?.takerSide === "BUY" ? "text-green-400" : "text-red-400"
-            }`}
-          >
-            {fmt(Number(trades[0]?.price) || 0)}
-            {trades[0]?.takerSide === "BUY" ? (
-              <FaArrowUpLong className="text-green-400 text-sm" />
-            ) : (
-              <FaArrowDownLong className="text-red-400 text-sm" />
-            )}
-            <span className="text-gray-400 text-xs font-semibold">
-              {" "}
-              {"$"}
+        <div className="px-4 py-3 flex justify-between items-center gap-2 z-10 dark:bg-[#181A20] bg-white">
+          <div>
+            <span
+              className={`text-lg font-semibold flex items-center  ${
+                trades[0]?.takerSide === "BUY"
+                  ? "text-green-400"
+                  : "text-red-400"
+              }`}
+            >
               {fmt(Number(trades[0]?.price) || 0)}
+              {trades[0]?.takerSide === "BUY" ? (
+                <FaArrowUpLong className="text-green-400 text-sm" />
+              ) : (
+                <FaArrowDownLong className="text-red-400 text-sm" />
+              )}
+              <span className="text-gray-400 text-xs font-semibold">
+                {" "}
+                {"$"}
+                {fmt(Number(trades[0]?.price) || 0)}
+              </span>
             </span>
-          </span>
+          </div>
+
+          <LuChevronRight className="text-gray-400 hover:text-black dark:hover:text-white" />
         </div>
 
         {/* BIDS - No scroll */}

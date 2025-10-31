@@ -1,7 +1,6 @@
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { SymbolProvider } from "@/context/SymbolContext";
-import { WebSocketProvider } from "@/context/WebSocketContext";
 import { ClientLayout } from "./client-layout";
 import "./globals.css";
 
@@ -21,12 +20,10 @@ export default function RootLayout({
       <head></head>
       <body className={`${beVietnamPro.variable} antialiased`}>
         <ClientLayout>
-          <WebSocketProvider>
-            <SymbolProvider>
-              <Toaster position="bottom-right" />
-              <div className="max-w-[1920px] mx-auto">{children}</div>
-            </SymbolProvider>
-          </WebSocketProvider>
+          <SymbolProvider>
+            <Toaster position="bottom-right" />
+            <div className="max-w-[1920px] mx-auto">{children}</div>
+          </SymbolProvider>
         </ClientLayout>
       </body>
     </html>

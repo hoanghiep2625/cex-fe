@@ -22,7 +22,10 @@ export default function TradingPairListPanel() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Use WebSocket ticker instead of polling
-  const { tickers, connected } = useTicker(activeTab, "spot");
+  const { tickers, connected } = useTicker({
+    quoteAsset: activeTab,
+    type: "spot",
+  });
 
   // Convert tickers to display format
   const tradingPairs = tickers?.map((sym) => ({

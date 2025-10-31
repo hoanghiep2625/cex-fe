@@ -137,7 +137,7 @@ export default function MarketHeader({
                 />
               </div>
               <div className="pr-[8px]">
-                <div className="text-[20px] leading-[20px] text-black dark:text-white font-medium">
+                <div className="text-[18px] leading-[20px] text-black dark:text-white font-semibold">
                   {(data?.base_asset || "BTC") +
                     "/" +
                     (data?.quote_asset || "USDT")}
@@ -165,20 +165,20 @@ export default function MarketHeader({
           <div className="flex-1 flex px-[16px] relative justify-center items-center">
             <button
               onClick={() => scroll("left")}
-              className={`absolute left-0 flex items-center justify-center w-6 h-8 rounded z-30 transition-opacity duration-200
+              className={`absolute left-0 flex items-center justify-center w-6 h-8 rounded z-2 transition-opacity duration-200
     ${canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             >
               <LuChevronLeft className="text-gray-400 hover:text-black dark:hover:text-white" />
             </button>
             {/* Left Fade Gradient */}
             <div
-              className={`absolute left-[10px] top-0 w-[40px] h-full bg-gradient-to-r dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-20
+              className={`absolute left-[10px] top-0 w-[40px] h-full bg-gradient-to-r dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-1
   ${canScrollLeft ? "opacity-100" : "opacity-0"}`}
             />
 
             {/* Right Fade Gradient */}
             <div
-              className={`absolute right-[15px] top-0 w-[40px] h-full bg-gradient-to-l dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-20
+              className={`absolute right-[15px] top-0 w-[40px] h-full bg-gradient-to-l dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-1
   ${canScrollRight ? "opacity-100" : "opacity-0"}`}
             />
             <div
@@ -275,7 +275,7 @@ export default function MarketHeader({
             {/* Right Button */}
             <button
               onClick={() => scroll("right")}
-              className={`absolute right-0 flex items-center justify-center w-6 h-8 rounded z-30 transition-opacity duration-200
+              className={`absolute right-0 flex items-center justify-center w-6 h-8 rounded z-2 transition-opacity duration-200
     ${canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"}`}
             >
               <LuChevronRight className="text-gray-400 hover:text-black dark:hover:text-white" />

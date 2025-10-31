@@ -1,29 +1,37 @@
 "use client";
 
 import AdjustIcon from "@/components/icons/AdjustIcon";
-import { useWebSocket } from "@/context/WebSocketContext";
+import { useTicker } from "@/hooks/useTicker";
 import { LuSignal } from "react-icons/lu";
 
-const tickers = [
-  { symbol: "BTC/USDT", change: "+0.31%", price: "111,305.84" },
-  { symbol: "ETH/USDT", change: "+0.30%", price: "3,928.81" },
-  { symbol: "ZEC/USDT", change: "+3.42%", price: "268.79" },
-  { symbol: "XRP/USDT", change: "+5.89%", price: "2.5595" },
-  { symbol: "ADA/USDT", change: "-1.23%", price: "0.9843" },
-  { symbol: "SOL/USDT", change: "+2.15%", price: "189.45" },
-  { symbol: "DOGE/USDT", change: "+0.87%", price: "0.3256" },
-  { symbol: "LINK/USDT", change: "+1.45%", price: "18.92" },
-];
+const fmt = (n: number) => {
+  const [integer, decimal] = n.toFixed(2).split(".");
+  const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${formattedInteger},${decimal}`;
+};
 
 export default function GlobalStatusBar() {
-  const { connected } = useWebSocket();
+  const { tickers, connected } = useTicker({
+    quoteAsset: "USDT",
+    type: "spot",
+  });
+
+  const tradingPairs =
+    tickers?.map((sym) => ({
+      symbol: `${sym.base_asset}/${sym.quote_asset}`,
+      price: fmt(sym.price || 0),
+      change: `${sym.priceChangePercent24h >= 0 ? "+" : ""}${fmt(
+        Math.abs(sym.priceChangePercent24h || 0)
+      )}%`,
+    })) || [];
+
   const connectionStatus = connected ? "Kết nối ổn định" : "Mất kết nối";
 
   return (
     <div className="fixed bottom-0 left-0 right-0 dark:bg-[#181A20] bg-white w-full overflow-hidden py-1 z-50 border-t-4 dark:border-[#0f1119] border-gray-100">
       <div className="flex gap-2 text-xs items-center justify-between dark:text-white text-black px-4">
         <div
-          className={`flex gap-2 items-center shrink-0 w-auto ${
+          className={`flex gap-2 w-[110px] items-center shrink-0 ${
             connected ? "text-green-500" : "text-gray-500"
           }`}
         >
@@ -37,23 +45,29 @@ export default function GlobalStatusBar() {
           />
           <div className="overflow-hidden flex-1">
             <div className=" animate-scroll flex gap-6 whitespace-nowrap ">
-              {[...tickers, ...tickers].map((ticker, idx) => (
-                <div key={idx} className="flex items-center gap-1 shrink-0">
-                  <span className="font-semibold">{ticker.symbol}</span>
-                  <span
-                    className={
-                      ticker.change.startsWith("+")
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }
+              {tradingPairs.length > 0 &&
+                [...tradingPairs, ...tradingPairs].map((ticker, idx) => (
+                  <div
+                    key={`${ticker.symbol}-${idx}`}
+                    className="flex items-center gap-1 shrink-0 min-w-[90px]"
                   >
-                    {ticker.change}
-                  </span>
-                  <span className="dark:text-gray-300 text-gray-600">
-                    {ticker.price}
-                  </span>
-                </div>
-              ))}
+                    <span className="font-semibold w-[70px] text-left">
+                      {ticker.symbol}
+                    </span>
+                    <span
+                      className={`${
+                        ticker.change.startsWith("+")
+                          ? "text-green-500"
+                          : "text-red-500"
+                      } w-[40px] text-left`}
+                    >
+                      {ticker.change}
+                    </span>
+                    <span className="dark:text-gray-300 text-gray-600 w-[80px] text-left">
+                      {ticker.price}
+                    </span>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
