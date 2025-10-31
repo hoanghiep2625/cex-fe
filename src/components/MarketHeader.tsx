@@ -123,6 +123,7 @@ export default function MarketHeader({
             <div className="flex justify-center items-center gap-[8px]">
               <div className="">
                 <Image
+                  className="rounded-full border border-gray-200 dark:border-gray-600"
                   key={baseAssetCode}
                   src={
                     imageError
