@@ -239,7 +239,7 @@ export function useTicker({
   }, [connect]);
 
   // tiện ích
-  const send = useCallback((data: any) => {
+  const send = useCallback((data: Record<string, unknown>) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
       return true;
