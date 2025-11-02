@@ -59,11 +59,11 @@ export default function GlobalStatusBar() {
                         ticker.change.startsWith("+")
                           ? "text-green-500"
                           : "text-red-500"
-                      } w-[40px] text-left`}
+                      } w-10 text-left`}
                     >
                       {ticker.change}
                     </span>
-                    <span className="dark:text-gray-300 text-gray-600 w-[80px] text-left">
+                    <span className="dark:text-gray-300 text-gray-600 w-20 text-left">
                       {ticker.price}
                     </span>
                   </div>
@@ -72,7 +72,7 @@ export default function GlobalStatusBar() {
           </div>
         </div>
         <div className="text-gray-300">|</div>
-        <div className="flex w-auto gap-4 justify-end ">
+        <div className="flex gap-4 justify-end w-72 shrink-0 text-xs">
           <div className="cursor-pointer hover:dark:text-gray-300 hover:text-gray-500">
             Thông báo
           </div>

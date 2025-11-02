@@ -30,11 +30,9 @@ export default function CandlestickChart({
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const hasInitialFit = useRef(false); // Track if we've done initial fitContent
 
-  // Create chart once
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    // Create chart (v5 API - theo docs example)
     const chart = createChart(chartContainerRef.current, {
       layout: {
         textColor: isDark ? "#9CA3AF" : "#6B7280",
@@ -115,9 +113,8 @@ export default function CandlestickChart({
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, []); // Only create once
+  }, [isDark]);
 
-  // Update theme when isDark changes
   useEffect(() => {
     if (!chartRef.current) return;
 
@@ -142,7 +139,6 @@ export default function CandlestickChart({
     });
   }, [isDark]);
 
-  // Update candle data
   useEffect(() => {
     if (
       !candlestickSeriesRef.current ||
@@ -173,7 +169,6 @@ export default function CandlestickChart({
     candlestickSeriesRef.current.setData(candleData);
     volumeSeriesRef.current.setData(volumeData);
 
-    // Only fitContent on initial load, not on updates (to preserve zoom/pan)
     if (chartRef.current && !hasInitialFit.current) {
       chartRef.current.timeScale().fitContent();
       hasInitialFit.current = true;

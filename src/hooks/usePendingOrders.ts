@@ -29,11 +29,14 @@ const LISTEN_KEY_EXPIRY_STORAGE_KEY = "pendingOrders_listenKeyExpiry";
 
 export const usePendingOrders = (
   symbol?: string,
-  hideOtherPairs: boolean = false
+  hideOtherPairs: boolean = false,
+  page: number = 1,
+  limit: number = 20
 ) => {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const listenKeyRef = useRef<string | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -85,96 +88,41 @@ export const usePendingOrders = (
     }
   };
 
-  // Function to create new listenKey
-  const createListenKey = async (): Promise<string | null> => {
-    try {
-      const response = await axiosInstance.post("/user-sessions/listen-key");
-      const listenKeyData: ListenKeyData = response.data?.data?.data;
+  // Function to refresh existing listenKey - wrapped in useCallback
+  const refreshListenKey = useCallback(
+    async (currentListenKey: string): Promise<ListenKeyData | null> => {
+      try {
+        const response = await axiosInstance.post(
+          `/user-sessions/listen-key/${currentListenKey}/refresh`
+        );
+        // Response structure: same as create
+        const listenKeyData: ListenKeyData = response.data?.data?.data;
 
-      if (!listenKeyData?.listenKey) {
-        console.error("❌ No listenKey in response:", response.data);
+        if (!listenKeyData?.listenKey) {
+          console.error("❌ No listenKey in refresh response:", response.data);
+          return null;
+        }
+
+        const { listenKey, expiresIn, expiresAt } = listenKeyData;
+
+        console.log(
+          `✅ ListenKey refreshed: ${listenKey.substring(
+            0,
+            8
+          )}... (expires in ${expiresIn}s)`
+        );
+
+        // Save updated listenKey to localStorage
+        saveListenKeyToStorage(listenKey, expiresAt);
+
+        return { listenKey, expiresIn, expiresAt };
+      } catch (err) {
+        console.error("❌ Failed to refresh listenKey:", err);
         return null;
       }
-
-      const { listenKey, expiresIn, expiresAt } = listenKeyData;
-
-      console.log(
-        `✅ ListenKey created: ${listenKey.substring(
-          0,
-          8
-        )}... (expires in ${expiresIn}s)`
-      );
-
-      // Save to localStorage
-      saveListenKeyToStorage(listenKey, expiresAt);
-
-      // Set up refresh timer (refresh 5 minutes before expiration)
-      const refreshTime = (expiresIn - 300) * 1000; // 5 minutes before expiry
-      scheduleRefresh(listenKey, refreshTime);
-
-      return listenKey;
-    } catch (err) {
-      console.error("❌ Failed to create listenKey:", err);
-      setError("Failed to create listenKey");
-      return null;
-    }
-  };
-
-  // Function to refresh existing listenKey
-  const refreshListenKey = async (
-    currentListenKey: string
-  ): Promise<string | null> => {
-    try {
-      const response = await axiosInstance.post(
-        `/user-sessions/listen-key/${currentListenKey}/refresh`
-      );
-      // Response structure: same as create
-      const listenKeyData: ListenKeyData = response.data?.data?.data;
-
-      if (!listenKeyData?.listenKey) {
-        console.error("❌ No listenKey in refresh response:", response.data);
-        return null;
-      }
-
-      const { listenKey, expiresIn, expiresAt } = listenKeyData;
-
-      console.log(
-        `✅ ListenKey refreshed: ${listenKey.substring(
-          0,
-          8
-        )}... (expires in ${expiresIn}s)`
-      );
-
-      // Save updated listenKey to localStorage
-      saveListenKeyToStorage(listenKey, expiresAt);
-
-      // Schedule next refresh
-      const refreshTime = (expiresIn - 300) * 1000;
-      scheduleRefresh(listenKey, refreshTime);
-
-      return listenKey;
-    } catch (err) {
-      console.error("❌ Failed to refresh listenKey:", err);
-      return null;
-    }
-  };
-
-  // Function to schedule refresh timer
-  const scheduleRefresh = (listenKey: string, refreshTime: number): void => {
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-    }
-
-    refreshTimerRef.current = setTimeout(async () => {
-      console.log("⏰ Time to refresh listenKey...");
-      const newListenKey = await refreshListenKey(listenKey);
-      if (newListenKey) {
-        listenKeyRef.current = newListenKey;
-        // Reconnect WebSocket with new listenKey
-        connectWebSocket(newListenKey);
-      }
-    }, refreshTime);
-  };
+    },
+    []
+  );
 
   // Function to connect WebSocket with exponential backoff
   const connectWebSocket = useCallback(
@@ -191,7 +139,7 @@ export const usePendingOrders = (
           `${protocol}://api-cex.tahoanghiep.com`;
         const wsUrl = `${baseUrl}/ws/orders?listenKey=${listenKey}&symbol=${
           symbol || ""
-        }`;
+        }&page=${page}&limit=${limit}`;
 
         console.log(`🔗 Connecting to PendingOrders WebSocket: ${wsUrl}`);
         const ws = new WebSocket(wsUrl);
@@ -217,10 +165,13 @@ export const usePendingOrders = (
               }
 
               setOrders(filteredOrders);
+              setTotal(msg.total || filteredOrders.length);
 
               if (msg.timestamp) {
                 console.log(
-                  `📊 PendingOrders update: ${filteredOrders.length} orders`
+                  `📊 PendingOrders update: ${
+                    filteredOrders.length
+                  } orders (Total: ${msg.total || filteredOrders.length})`
                 );
               }
             }
@@ -270,7 +221,7 @@ export const usePendingOrders = (
         setError("Failed to connect WebSocket");
       }
     },
-    [symbol, hideOtherPairs]
+    [symbol, hideOtherPairs, page, limit]
   );
 
   useEffect(() => {
@@ -284,6 +235,62 @@ export const usePendingOrders = (
     }
 
     shouldConnectRef.current = true;
+
+    // Define scheduleRefresh inside useEffect to avoid circular dependencies
+    const scheduleRefresh = (listenKey: string, refreshTime: number): void => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
+
+      refreshTimerRef.current = setTimeout(async () => {
+        console.log("⏰ Time to refresh listenKey...");
+        const result = await refreshListenKey(listenKey);
+        if (result) {
+          const { listenKey: newListenKey, expiresIn } = result;
+          listenKeyRef.current = newListenKey;
+          // Schedule next refresh
+          const nextRefreshTime = (expiresIn - 300) * 1000;
+          scheduleRefresh(newListenKey, nextRefreshTime);
+          // Reconnect WebSocket with new listenKey
+          connectWebSocket(newListenKey);
+        }
+      }, refreshTime);
+    };
+
+    // Define createListenKey inside useEffect to avoid circular dependencies
+    const createListenKey = async (): Promise<string | null> => {
+      try {
+        const response = await axiosInstance.post("/user-sessions/listen-key");
+        const listenKeyData: ListenKeyData = response.data?.data?.data;
+
+        if (!listenKeyData?.listenKey) {
+          console.error("❌ No listenKey in response:", response.data);
+          return null;
+        }
+
+        const { listenKey, expiresIn, expiresAt } = listenKeyData;
+
+        console.log(
+          `✅ ListenKey created: ${listenKey.substring(
+            0,
+            8
+          )}... (expires in ${expiresIn}s)`
+        );
+
+        // Save to localStorage
+        saveListenKeyToStorage(listenKey, expiresAt);
+
+        // Set up refresh timer (refresh 5 minutes before expiration)
+        const refreshTime = (expiresIn - 300) * 1000; // 5 minutes before expiry
+        scheduleRefresh(listenKey, refreshTime);
+
+        return listenKey;
+      } catch (err) {
+        console.error("❌ Failed to create listenKey:", err);
+        setError("Failed to create listenKey");
+        return null;
+      }
+    };
 
     // Initialize connection
     const initializeConnection = async () => {
@@ -321,7 +328,7 @@ export const usePendingOrders = (
         clearTimeout(reconnectTimerRef.current);
       }
     };
-  }, [symbol, hideOtherPairs]);
+  }, [symbol, hideOtherPairs, connectWebSocket, refreshListenKey]);
 
-  return { orders, loading, error, connected };
+  return { orders, loading, error, connected, total, page, limit };
 };

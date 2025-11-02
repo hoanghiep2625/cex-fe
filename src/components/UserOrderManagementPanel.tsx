@@ -14,11 +14,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   const [hideOtherPairs, setHideOtherPairs] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
-  const { orders, loading, error, connected } = usePendingOrders(
+  const { orders, loading, error, connected, total } = usePendingOrders(
     hideOtherPairs ? pair : undefined,
-    hideOtherPairs
+    hideOtherPairs,
+    page,
+    limit
   );
   const cancelOrder = useMutation({
     mutationFn: (orderId: string) =>
@@ -240,6 +244,64 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                     ))}
                   </tbody>
                 </table>
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center mt-4 px-2 my-6">
+                  <div className="text-xs text-gray-500">
+                    Tổng: {total || orders.length} lệnh | Trang {page} /{" "}
+                    {Math.ceil((total || 1) / limit)}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      className={`px-3 py-1 text-xs rounded transition ${
+                        page === 1
+                          ? "opacity-50 cursor-not-allowed dark:bg-gray-800 bg-gray-200"
+                          : "dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      ← Trước
+                    </button>
+                    <select
+                      value={page}
+                      onChange={(e) => setPage(parseInt(e.target.value))}
+                      className="px-3 py-1 text-xs rounded dark:bg-gray-800 dark:text-white bg-gray-200 text-black"
+                    >
+                      {Array.from(
+                        { length: Math.ceil((total || 1) / limit) },
+                        (_, i) => i + 1
+                      ).map((p) => (
+                        <option key={p} value={p}>
+                          Trang {p}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => setPage(page + 1)}
+                      disabled={page >= Math.ceil((total || 1) / limit)}
+                      className={`px-3 py-1 text-xs rounded transition ${
+                        page >= Math.ceil((total || 1) / limit)
+                          ? "opacity-50 cursor-not-allowed dark:bg-gray-800 bg-gray-200"
+                          : "dark:bg-gray-800 bg-gray-200 hover:dark:bg-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      Sau →
+                    </button>
+                    <select
+                      value={limit}
+                      onChange={(e) => {
+                        setLimit(parseInt(e.target.value));
+                        setPage(1); // Reset to first page
+                      }}
+                      className="px-3 py-1 text-xs rounded dark:bg-gray-800 dark:text-white bg-gray-200 text-black"
+                    >
+                      <option value={10}>10/trang</option>
+                      <option value={20}>20/trang</option>
+                      <option value={50}>50/trang</option>
+                      <option value={100}>100/trang</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
           </div>

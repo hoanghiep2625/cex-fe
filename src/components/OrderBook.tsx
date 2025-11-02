@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useOrderBook } from "@/hooks/useOrderBook";
 import { useSymbol } from "@/context/SymbolContext";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
@@ -128,7 +128,7 @@ export default function OrderBook({
       <div className="group-hover:block hidden absolute -top-6 -right-[193px] z-2 dark:bg-gray-200 bg-black dark:text-black text-white p-2 rounded shadow-lg border border-gray-300">
         {/* Mũi tên trỏ vào row */}
         <div className="absolute left-[-5px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-300 border-black"></div>
-        <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-200 border-black"></div>
+        <div className="absolute left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-200 border-black"></div>
         <div className="flex gap-2 text-xs">
           <div>
             <p>Giá trung bình:</p>

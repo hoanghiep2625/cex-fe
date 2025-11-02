@@ -98,25 +98,6 @@ export function useTicker({
     )}&type=${encodeURIComponent(type)}`;
   };
 
-  const scheduleReconnect = useCallback(() => {
-    if (!shouldConnectRef.current) return;
-
-    const attempt = reconnectAttemptsRef.current;
-    if (attempt >= maxReconnectAttempts) {
-      setError("Failed to connect after multiple attempts");
-      return;
-    }
-
-    // exponential backoff + jitter
-    const jitter = Math.random() * 300;
-    const delay = Math.min(30000, baseDelayMs * Math.pow(2, attempt)) + jitter;
-
-    reconnectTimeoutRef.current = setTimeout(() => {
-      reconnectAttemptsRef.current++;
-      connect();
-    }, delay);
-  }, [baseDelayMs, maxReconnectAttempts]);
-
   const connect = useCallback(() => {
     // cleanup socket cũ
     if (wsRef.current) {
@@ -142,10 +123,11 @@ export function useTicker({
       // Heartbeat: ping định kỳ để giữ kết nối & phát hiện treo
       heartbeatIntervalRef.current = setInterval(() => {
         try {
-          wsRef.current?.readyState === WebSocket.OPEN &&
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current?.send(
               JSON.stringify({ type: "ping", ts: Date.now() })
             );
+          }
         } catch {}
       }, heartbeatMs);
 
@@ -211,7 +193,26 @@ export function useTicker({
       scheduleReconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quoteAsset, type, heartbeatMs, staleThresholdMs, scheduleReconnect]);
+  }, [quoteAsset, type, heartbeatMs, staleThresholdMs]);
+
+  const scheduleReconnect = useCallback(() => {
+    if (!shouldConnectRef.current) return;
+
+    const attempt = reconnectAttemptsRef.current;
+    if (attempt >= maxReconnectAttempts) {
+      setError("Failed to connect after multiple attempts");
+      return;
+    }
+
+    // exponential backoff + jitter
+    const jitter = Math.random() * 300;
+    const delay = Math.min(30000, baseDelayMs * Math.pow(2, attempt)) + jitter;
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectAttemptsRef.current++;
+      connect();
+    }, delay);
+  }, [baseDelayMs, maxReconnectAttempts, connect]);
 
   // Khởi tạo & cleanup
   useEffect(() => {

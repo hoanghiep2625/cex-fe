@@ -113,14 +113,14 @@ export default function MarketHeader({
   };
 
   return (
-    <div className="h-[56px] bg-white dark:bg-[#181A20] rounded-[8px] flex px-[16px] relative">
+    <div className="h-14 bg-white dark:bg-[#181A20] rounded-lg flex px-4 relative">
       {isLoading ? null : (
         <>
-          <div className="w-[280px] flex items-center gap-[8px] text-[#9c9c9c]">
-            <div className="flex justify-center w-6 h-6 items-center mr-[4px] border rounded-[8px] dark:border-gray-600 border-gray-200 cursor-pointer">
+          <div className="w-[280px] flex items-center gap-2 text-[#9c9c9c]">
+            <div className="flex justify-center w-6 h-6 items-center mr-1 border rounded-lg dark:border-gray-600 border-gray-200 cursor-pointer">
               <CiStar className="text-[16px] dark:border-gray-600 border-gray-200" />
             </div>
-            <div className="flex justify-center items-center gap-[8px]">
+            <div className="flex justify-center items-center gap-2">
               <div className="">
                 <Image
                   className="rounded-full border border-gray-200 dark:border-gray-600"
@@ -137,13 +137,13 @@ export default function MarketHeader({
                   unoptimized
                 />
               </div>
-              <div className="pr-[8px]">
-                <div className="text-[18px] leading-[20px] text-black dark:text-white font-semibold">
+              <div className="pr-2">
+                <div className="text-[18px] leading-5 text-black dark:text-white font-semibold">
                   {(data?.base_asset || "BTC") +
                     "/" +
                     (data?.quote_asset || "USDT")}
                 </div>
-                <div className="text-[12px] text-[#9c9c9c] flex gap-[4px] items-center">
+                <div className="text-[12px] text-[#9c9c9c] flex gap-1 items-center">
                   <Link
                     href={`/price/${baseAssetCode}`}
                     className="font-normal text-[#9c9c9c]"
@@ -155,7 +155,7 @@ export default function MarketHeader({
               </div>
             </div>
             <div className="flex justify-center flex-col items-start">
-              <div className="text-[20px] text-[#2EBD85] font-semibold leading-[20px]">
+              <div className="text-[20px] text-[#2EBD85] font-semibold leading-5">
                 {fmt(marketData?.price || 0)}
               </div>
               <div className="text-[12px] text-black dark:text-white">
@@ -163,7 +163,7 @@ export default function MarketHeader({
               </div>
             </div>
           </div>
-          <div className="flex-1 flex px-[16px] relative justify-center items-center">
+          <div className="flex-1 flex px-4 relative justify-center items-center">
             <button
               onClick={() => scroll("left")}
               className={`absolute left-0 flex items-center justify-center w-6 h-8 rounded z-2 transition-opacity duration-200
@@ -173,22 +173,22 @@ export default function MarketHeader({
             </button>
             {/* Left Fade Gradient */}
             <div
-              className={`absolute left-[10px] top-0 w-[40px] h-full bg-gradient-to-r dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-1
+              className={`absolute left-2.5 top-0 w-10 h-full bg-linear-to-r dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-1
   ${canScrollLeft ? "opacity-100" : "opacity-0"}`}
             />
 
             {/* Right Fade Gradient */}
             <div
-              className={`absolute right-[15px] top-0 w-[40px] h-full bg-gradient-to-l dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-1
+              className={`absolute right-[15px] top-0 w-10 h-full bg-linear-to-l dark:from-[#181A20] from-white to-transparent transition-opacity duration-200 pointer-events-none z-1
   ${canScrollRight ? "opacity-100" : "opacity-0"}`}
             />
             <div
               ref={scrollContainerRef}
               className="flex gap-4 overflow-x-hidden flex-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              <div className="flex gap-[16px] text-[12px]">
+              <div className="flex gap-4 text-[12px]">
                 <div className="flex  flex-col justify-center">
-                  <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                  <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                     Biến động trong 24 giờ
                   </div>
                   <div className="text-[#F6465D]">
@@ -207,7 +207,7 @@ export default function MarketHeader({
                   </div>
                 </div>
                 <div className="flex  flex-col justify-center">
-                  <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                  <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                     Giá cao nhất 24h
                   </div>
                   <div className="font-medium">
@@ -215,7 +215,7 @@ export default function MarketHeader({
                   </div>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                  <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                     Giá thấp nhất 24h
                   </div>
                   <div className="font-medium">
@@ -223,7 +223,7 @@ export default function MarketHeader({
                   </div>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                  <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                     KL 24h({data?.base_asset || "BTC"})
                   </div>
                   <div className="font-medium">
@@ -231,7 +231,7 @@ export default function MarketHeader({
                   </div>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                  <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                     KL 24h({data?.quote_asset || "USDT"})
                   </div>
                   <div className="font-medium">
@@ -239,7 +239,7 @@ export default function MarketHeader({
                   </div>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                  <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                     Mạng lưới
                   </div>
                   <hr className="border border-t-0 border-dashed border-[#9c9c9c] " />
@@ -247,10 +247,10 @@ export default function MarketHeader({
                 </div>
               </div>
               <div className="flex flex-col justify-center text-[12px] w-[120px] shrink-0">
-                <div className="text-[#9c9c9c] whitespace-nowrap mb-[2px]">
+                <div className="text-[#9c9c9c] whitespace-nowrap mb-0.5">
                   Thẻ token
                 </div>
-                <div className="flex font-medium gap-[4px]">
+                <div className="flex font-medium gap-1">
                   <Link href={"#"} className="text-[#D89F00] whitespace-nowrap">
                     POW
                   </Link>
