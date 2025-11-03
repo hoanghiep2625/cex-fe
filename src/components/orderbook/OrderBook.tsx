@@ -6,18 +6,12 @@ import { useSymbol } from "@/context/SymbolContext";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
-import { SymbolInfo } from "@/components/MarketHeader";
+import { Symbol } from "@/types";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
 import { FaArrowUpLong, FaArrowDownLong } from "react-icons/fa6";
 import { PiApproximateEqualsBold } from "react-icons/pi";
 import { LuChevronRight } from "react-icons/lu";
-
-export const fmt = (n: number) => {
-  // EU/VN format: 100.000,00 (dấu chấm ngăn nghìn, dấu phẩy thập phân)
-  const [integer, decimal] = n.toFixed(2).split(".");
-  const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${formattedInteger},${decimal}`;
-};
+import { fmt } from "@/lib/formatters";
 
 export default function OrderBook({
   pair,
@@ -38,7 +32,7 @@ export default function OrderBook({
 
   const { trades } = useRecentTrades(symbol?.code || pair.replace("_", ""));
 
-  const { data } = useQuery<SymbolInfo>({
+  const { data } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol?.code || pair.replace("_", "")],
     queryFn: () =>
       axiosInstance

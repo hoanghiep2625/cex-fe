@@ -3,15 +3,15 @@
 import { useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useSymbol } from "@/context/SymbolContext";
-import MenuBar from "@/components/MenuBar";
-import OrderBook from "@/components/OrderBook";
-import MarketHeader from "@/components/MarketHeader";
-import TradingPairListPanel from "@/components/TradingPairListPanel";
-import RecentTrades from "@/components/RecentTrades";
-import OrderEntryPanel from "@/components/OrderEntryPanel";
-import ChartPanel from "@/components/ChartPanel";
-import GlobalStatusBar from "@/components/GlobalStatusBar";
-import UserOrderManagementPanel from "@/components/UserOrderManagementPanel";
+import MenuBar from "@/components/common/MenuBar";
+import OrderBook from "@/components/orderbook/OrderBook";
+import MarketHeader from "@/components/market/MarketHeader";
+import TradingPairListPanel from "@/components/market/TradingPairListPanel";
+import RecentTrades from "@/components/market/RecentTrades";
+import OrderEntryPanel from "@/components/trading/OrderEntryPanel";
+import ChartPanel from "@/components/chart/ChartPanel";
+import GlobalStatusBar from "@/components/common/GlobalStatusBar";
+import UserOrderManagementPanel from "@/components/trading/UserOrderManagementPanel";
 
 export default function TradePage() {
   const params = useParams();

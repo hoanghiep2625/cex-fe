@@ -2,7 +2,7 @@
 
 import TabUnderline from "@/components/ui/TabUnderline";
 import { useRef, useState, useEffect, useMemo } from "react";
-import CandlestickChart from "@/components/CandlestickChart";
+import CandlestickChart from "@/components/chart/CandlestickChart";
 import { useCandles } from "@/hooks/useCandles";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { Bars } from "react-loader-spinner";

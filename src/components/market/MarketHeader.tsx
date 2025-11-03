@@ -9,16 +9,9 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { MdOutlineArrowOutward } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axiosInstance";
-import { fmt } from "@/components/OrderBook";
+import { fmt } from "@/lib/formatters";
 import Link from "next/link";
-
-export interface SymbolInfo {
-  id: number;
-  symbol: string;
-  base_asset: string;
-  quote_asset: string;
-  name?: string;
-}
+import { Symbol } from "@/types";
 
 export default function MarketHeader({
   pair,
@@ -38,7 +31,7 @@ export default function MarketHeader({
     connected,
     loading: marketDataLoading,
   } = useMarketData(symbol, type);
-  const { data, isLoading: symbolInfoLoading } = useQuery<SymbolInfo>({
+  const { data, isLoading: symbolInfoLoading } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol],
     queryFn: () =>
       axiosInstance.get(`/symbols/code/${symbol}`).then((r) => r.data?.data),

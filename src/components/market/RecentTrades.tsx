@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
-import TabUnderline from "./ui/TabUnderline";
+import TabUnderline from "@/components/ui/TabUnderline";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
-import { fmt } from "@/components/OrderBook";
+import { fmt } from "@/lib/formatters";
 
 export default function RecentTrades({ pair }: { pair: string }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");

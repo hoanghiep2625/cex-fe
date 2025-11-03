@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import CustomCheckbox from "./ui/CustomCheckbox";
-import TabUnderline from "./ui/TabUnderline";
+import CustomCheckbox from "@/components/ui/CustomCheckbox";
+import TabUnderline from "@/components/ui/TabUnderline";
 import { useAuth } from "@/hooks/useAuth";
 import { usePendingOrders } from "@/hooks/usePendingOrders";
 import Link from "next/link";

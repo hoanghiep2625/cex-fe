@@ -6,16 +6,8 @@ import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
 import { useTicker } from "@/hooks/useTicker";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
-import { fmt } from "@/components/OrderBook";
-
-export interface Symbol {
-  id: number;
-  symbol: string;
-  base_asset: string;
-  quote_asset: string;
-  price?: number;
-  change?: number;
-}
+import { fmt } from "@/lib/formatters";
+import { Symbol } from "@/types";
 
 export default function TradingPairListPanel() {
   const [activeTab, setActiveTab] = useState("USDT");
