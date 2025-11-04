@@ -72,16 +72,19 @@ src/
 ## 🎯 Nguyên tắc tổ chức
 
 ### 1. **Components theo domain**
+
 - Mỗi domain có folder riêng (market, trading, orderbook, chart)
 - UI components dùng chung trong `/ui`
 - Global components trong `/common`
 
 ### 2. **Types tập trung**
+
 - Tất cả TypeScript types trong `/types`
 - Export thống nhất qua `index.ts`
 - Tránh duplicate interface giữa các file
 
 ### 3. **Hooks có barrel export**
+
 ```typescript
 // Thay vì:
 import { useAuth } from "@/hooks/useAuth";
@@ -92,6 +95,7 @@ import { useAuth, useOrderBook } from "@/hooks";
 ```
 
 ### 4. **Import paths**
+
 ```typescript
 // Components
 import OrderBook from "@/components/orderbook/OrderBook";
@@ -141,6 +145,7 @@ npm run lint
 ## 🔄 Migration Notes
 
 Refactored from flat structure to domain-based organization:
+
 - All components now organized by domain
 - Centralized type definitions
 - Added barrel exports for hooks

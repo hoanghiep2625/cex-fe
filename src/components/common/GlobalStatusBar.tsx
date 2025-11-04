@@ -2,13 +2,8 @@
 
 import AdjustIcon from "@/components/icons/AdjustIcon";
 import { useTicker } from "@/hooks/useTicker";
+import { formatPrice } from "@/lib/formatters";
 import { LuSignal } from "react-icons/lu";
-
-const fmt = (n: number) => {
-  const [integer, decimal] = n.toFixed(2).split(".");
-  const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${formattedInteger},${decimal}`;
-};
 
 export default function GlobalStatusBar() {
   const { tickers, connected } = useTicker({
@@ -19,8 +14,8 @@ export default function GlobalStatusBar() {
   const tradingPairs =
     tickers?.map((sym) => ({
       symbol: `${sym.base_asset}/${sym.quote_asset}`,
-      price: fmt(sym.price || 0),
-      change: `${sym.priceChangePercent24h >= 0 ? "+" : ""}${fmt(
+      price: formatPrice(sym.price || 0),
+      change: `${sym.priceChangePercent24h >= 0 ? "+" : ""}${formatPrice(
         Math.abs(sym.priceChangePercent24h || 0)
       )}%`,
     })) || [];

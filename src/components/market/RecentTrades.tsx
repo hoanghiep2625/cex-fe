@@ -4,25 +4,13 @@ import { useState, useMemo } from "react";
 import { useRecentTrades } from "@/hooks/useRecentTrades";
 import TabUnderline from "@/components/ui/TabUnderline";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
-import { fmt } from "@/lib/formatters";
+import { fmt, formatTime } from "@/lib/formatters";
 
 export default function RecentTrades({ pair }: { pair: string }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
 
-  // Convert pair format: "BTC_USDT" → "BTCUSDT"
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
   const { trades, connected } = useRecentTrades(symbol);
-
-  // Format time from milliseconds to HH:MM:SS
-  const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-  };
 
   const formatQuantity = (quantity: string | number) => {
     const num = typeof quantity === "string" ? parseFloat(quantity) : quantity;

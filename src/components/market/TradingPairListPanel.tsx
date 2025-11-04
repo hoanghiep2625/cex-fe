@@ -7,19 +7,16 @@ import { TiArrowUnsorted } from "react-icons/ti";
 import { useTicker } from "@/hooks/useTicker";
 import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { fmt } from "@/lib/formatters";
-import { Symbol } from "@/types";
 
 export default function TradingPairListPanel() {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Use WebSocket ticker instead of polling
   const { tickers, connected } = useTicker({
     quoteAsset: activeTab,
     type: "spot",
   });
 
-  // Convert tickers to display format
   const tradingPairs = tickers?.map((sym) => ({
     name: `${sym.base_asset}/${sym.quote_asset}`,
     leverage: "5x",

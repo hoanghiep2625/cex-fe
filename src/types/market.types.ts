@@ -27,7 +27,7 @@ export interface Trade {
   qty: string;
   quoteQty: string;
   time: number;
-  takerSide: 'BUY' | 'SELL';
+  takerSide: "BUY" | "SELL";
   created_at?: string;
 }
 

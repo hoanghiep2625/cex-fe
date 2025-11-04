@@ -1,7 +1,7 @@
 // Order and Trading related types
-export type OrderSide = 'BUY' | 'SELL';
-export type OrderType = 'LIMIT' | 'MARKET';
-export type OrderStatus = 'NEW' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELED';
+export type OrderSide = "BUY" | "SELL";
+export type OrderType = "LIMIT" | "MARKET";
+export type OrderStatus = "NEW" | "PARTIALLY_FILLED" | "FILLED" | "CANCELED";
 
 export interface Order {
   id: string;
