@@ -29,14 +29,11 @@ const LISTEN_KEY_EXPIRY_STORAGE_KEY = "pendingOrders_listenKeyExpiry";
 
 export const usePendingOrders = (
   symbol?: string,
-  hideOtherPairs: boolean = false,
-  page: number = 1,
-  limit: number = 20
+  hideOtherPairs: boolean = false
 ) => {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const listenKeyRef = useRef<string | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -139,7 +136,7 @@ export const usePendingOrders = (
           `${protocol}://api-cex.tahoanghiep.com`;
         const wsUrl = `${baseUrl}/ws/orders?listenKey=${listenKey}&symbol=${
           symbol || ""
-        }&page=${page}&limit=${limit}`;
+        }`;
 
         console.log(`🔗 Connecting to PendingOrders WebSocket: ${wsUrl}`);
         const ws = new WebSocket(wsUrl);
@@ -165,13 +162,10 @@ export const usePendingOrders = (
               }
 
               setOrders(filteredOrders);
-              setTotal(msg.total || filteredOrders.length);
 
               if (msg.timestamp) {
                 console.log(
-                  `📊 PendingOrders update: ${
-                    filteredOrders.length
-                  } orders (Total: ${msg.total || filteredOrders.length})`
+                  `📊 PendingOrders update: ${filteredOrders.length} orders`
                 );
               }
             }
@@ -221,7 +215,7 @@ export const usePendingOrders = (
         setError("Failed to connect WebSocket");
       }
     },
-    [symbol, hideOtherPairs, page, limit]
+    [symbol, hideOtherPairs]
   );
 
   useEffect(() => {
@@ -330,5 +324,5 @@ export const usePendingOrders = (
     };
   }, [symbol, hideOtherPairs, connectWebSocket, refreshListenKey]);
 
-  return { orders, loading, error, connected, total, page, limit };
+  return { orders, loading, error, connected };
 };

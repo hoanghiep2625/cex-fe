@@ -124,7 +124,7 @@ export default function TradingPairListPanel() {
                   </div>
                   <div
                     className={`font-medium w-14 text-right ${
-                      p.change > 0 ? "text-green-400" : "text-red-400"
+                      p.change >= 0 ? "text-green-400" : "text-red-400"
                     }`}
                   >
                     {p.change > 0 ? "+" : ""}
