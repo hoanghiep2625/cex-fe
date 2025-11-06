@@ -17,7 +17,7 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   const [activeTab, setActiveTab] = useState("orders");
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
-  const { orders, loading, error, connected } = usePendingOrders(
+  const { orders, connected } = usePendingOrders(
     hideOtherPairs ? pair : undefined,
     hideOtherPairs
   );
@@ -27,7 +27,6 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
 
     onSuccess: () => {
       toast.success("Huỷ lệnh thành công");
-      queryClient.invalidateQueries({ queryKey: ["balances"] });
     },
 
     onError: () => {
@@ -123,14 +122,6 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                   Đăng ký
                 </Link>{" "}
                 để giao dịch.
-              </div>
-            ) : loading ? (
-              <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
-                Đang tải...
-              </div>
-            ) : error ? (
-              <div className="text-center text-red-500 mt-10 text-xs font-semibold">
-                ❌ {error}
               </div>
             ) : orders.length === 0 ? (
               <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
@@ -248,12 +239,124 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
         )}
         {activeTab === "history" && (
           <div>
-            <DateFilters />
+            {!isAuthenticated ? (
+              <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
+                <Link href="/login" className="text-yellow-500">
+                  Đăng nhập
+                </Link>{" "}
+                hoặc{" "}
+                <Link href="/register" className="text-yellow-500">
+                  Đăng ký
+                </Link>{" "}
+                để giao dịch.
+              </div>
+            ) : (
+              <div>
+                <DateFilters />
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="dark:border-b dark:border-gray-700 border-b border-gray-200">
+                        <th className="text-left py-2 px-2 text-gray-500 font-semibold">
+                          Ngày giờ
+                        </th>
+                        <th className="text-left py-2 px-2 text-gray-500 font-semibold">
+                          Cặp
+                        </th>
+                        <th className="text-left py-2 px-2 text-gray-500 font-semibold">
+                          Loại
+                        </th>
+                        <th className="text-left py-2 px-2 text-gray-500 font-semibold">
+                          Bên
+                        </th>
+                        <th className="text-right py-2 px-2 text-gray-500 font-semibold">
+                          Giá
+                        </th>
+                        <th className="text-right py-2 px-2 text-gray-500 font-semibold">
+                          Số lượng
+                        </th>
+                        <th className="text-right py-2 px-2 text-gray-500 font-semibold">
+                          Đã khớp
+                        </th>
+                        <th className="text-right py-2 px-2 text-gray-500 font-semibold">
+                          Còn lại
+                        </th>
+                        <th className="text-center py-2 px-2 text-gray-500 font-semibold">
+                          Trạng thái
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map((order) => (
+                        <tr
+                          key={order.id}
+                          className="dark:border-b dark:border-gray-700 border-b border-gray-100 hover:dark:bg-gray-900 hover:bg-gray-50"
+                        >
+                          <td className="py-2 px-2">
+                            {new Date(order.created_at).toLocaleString("vi-VN")}
+                          </td>
+                          <td className="py-2 px-2 font-semibold">
+                            {order.symbol}
+                          </td>
+                          <td className="py-2 px-2">{order.type}</td>
+                          <td
+                            className={`py-2 px-2 font-semibold ${
+                              order.side === "BUY"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {order.side === "BUY" ? "Mua" : "Bán"}
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            {formatPrice(order.price)}
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            {formatQty(order.qty)}
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            {formatQty(order.filled_qty)}
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            {formatQty(order.remaining_qty)}
+                          </td>
+                          <td
+                            className={`py-2 px-2 text-center font-semibold ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            {getStatusLabel(order.status)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
         {activeTab === "trades" && (
           <div>
-            <DateFilters />
+            {!isAuthenticated ? (
+              <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
+                <Link href="/login" className="text-yellow-500">
+                  Đăng nhập
+                </Link>{" "}
+                hoặc{" "}
+                <Link href="/register" className="text-yellow-500">
+                  Đăng ký
+                </Link>{" "}
+                để giao dịch.
+              </div>
+            ) : orders.length !== 0 ? (
+              <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
+                Không có lệnh đang chờ khớp
+              </div>
+            ) : (
+              <DateFilters />
+            )}
           </div>
         )}
       </div>

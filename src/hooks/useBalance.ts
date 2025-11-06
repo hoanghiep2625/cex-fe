@@ -1,20 +1,15 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance";
 
-export interface PendingOrder {
-  id: string;
-  symbol: string;
-  side: "BUY" | "SELL";
-  type: "LIMIT" | "MARKET";
-  price: string;
-  qty: string;
-  filled_qty: string;
-  remaining_qty: string;
-  status: "NEW" | "PARTIALLY_FILLED";
-  tif: "GTC" | "FOK" | "IOC";
-  client_order_id?: string;
-  created_at: string;
-  updated_at: string;
+export interface BalanceData {
+  currency: string;
+  available: string;
+  locked: string;
+  total: string;
+}
+
+export interface BalanceInfo {
+  [key: string]: BalanceData; // { BTC: {...}, USDT: {...} }
 }
 
 interface ListenKeyData {
@@ -27,11 +22,8 @@ interface ListenKeyData {
 const LISTEN_KEY_STORAGE_KEY = "listenKey";
 const LISTEN_KEY_EXPIRY_STORAGE_KEY = "listenKeyExpiry";
 
-export const usePendingOrders = (
-  symbol?: string,
-  hideOtherPairs: boolean = false
-) => {
-  const [orders, setOrders] = useState<PendingOrder[]>([]);
+export const useBalance = (symbol: string, walletType: string = "spot") => {
+  const [balances, setBalances] = useState<BalanceInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -50,10 +42,13 @@ export const usePendingOrders = (
       localStorage.setItem(LISTEN_KEY_STORAGE_KEY, listenKey);
       localStorage.setItem(LISTEN_KEY_EXPIRY_STORAGE_KEY, expiresAt);
       console.log(
-        `💾 ListenKey saved to localStorage: ${listenKey.substring(0, 8)}...`
+        `💾 Balance ListenKey saved to localStorage: ${listenKey.substring(
+          0,
+          8
+        )}...`
       );
     } catch (err) {
-      console.error("Failed to save listenKey to localStorage:", err);
+      console.error("Failed to save balance listenKey to localStorage:", err);
     }
   };
 
@@ -72,7 +67,9 @@ export const usePendingOrders = (
 
       // Check if already expired
       if (new Date(expiresAt) <= new Date()) {
-        console.log("🗑️ ListenKey expired in localStorage, removing...");
+        console.log(
+          "🗑️ Balance ListenKey expired in localStorage, removing..."
+        );
         localStorage.removeItem(LISTEN_KEY_STORAGE_KEY);
         localStorage.removeItem(LISTEN_KEY_EXPIRY_STORAGE_KEY);
         return null;
@@ -80,7 +77,7 @@ export const usePendingOrders = (
 
       return { listenKey, expiresAt };
     } catch (err) {
-      console.error("Failed to get listenKey from localStorage:", err);
+      console.error("Failed to get balance listenKey from localStorage:", err);
       return null;
     }
   };
@@ -103,7 +100,7 @@ export const usePendingOrders = (
         const { listenKey, expiresIn, expiresAt } = listenKeyData;
 
         console.log(
-          `✅ ListenKey refreshed: ${listenKey.substring(
+          `✅ Balance ListenKey refreshed: ${listenKey.substring(
             0,
             8
           )}... (expires in ${expiresIn}s)`
@@ -114,7 +111,7 @@ export const usePendingOrders = (
 
         return { listenKey, expiresIn, expiresAt };
       } catch (err) {
-        console.error("❌ Failed to refresh listenKey:", err);
+        console.error("❌ Failed to refresh balance listenKey:", err);
         return null;
       }
     },
@@ -134,15 +131,13 @@ export const usePendingOrders = (
         const baseUrl =
           process.env.NEXT_PUBLIC_WS_URL ||
           `${protocol}://api-cex.tahoanghiep.com`;
-        const wsUrl = `${baseUrl}/ws/orders?listenKey=${listenKey}&symbol=${
-          symbol || ""
-        }`;
+        const wsUrl = `${baseUrl}/ws/balance?listenKey=${listenKey}&symbol=${symbol}&wallet_type=${walletType}`;
 
-        console.log(`🔗 Connecting to PendingOrders WebSocket: ${wsUrl}`);
+        console.log(`🔗 Connecting to Balance WebSocket: ${wsUrl}`);
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
-          console.log("✅ PendingOrders WebSocket connected");
+          console.log("✅ Balance WebSocket connected");
           setLoading(false);
           setConnected(true);
           setError(null);
@@ -152,36 +147,30 @@ export const usePendingOrders = (
           try {
             const msg = JSON.parse(data);
 
-            if (msg.action === "pending_orders" && Array.isArray(msg.orders)) {
-              let filteredOrders = msg.orders;
-
-              if (hideOtherPairs && symbol) {
-                filteredOrders = filteredOrders.filter(
-                  (order: PendingOrder) => order.symbol === symbol
-                );
-              }
-
-              setOrders(filteredOrders);
-
-              if (msg.timestamp) {
+            if (msg.action === "initial" || msg.action === "update") {
+              if (msg.balances) {
+                setBalances(msg.balances);
                 console.log(
-                  `📊 PendingOrders update: ${filteredOrders.length} orders`
+                  `📊 Balance update: ${Object.keys(msg.balances).join(", ")}`
                 );
               }
+            } else if (msg.error) {
+              console.error("❌ Balance WebSocket error:", msg.error);
+              setError(msg.error);
             }
           } catch (err) {
-            console.error("❌ Failed to parse pending orders message:", err);
-            setError("Failed to parse orders data");
+            console.error("❌ Failed to parse balance message:", err);
+            setError("Failed to parse balance data");
           }
         };
 
         ws.onerror = (event) => {
-          console.error("❌ WebSocket error:", event);
+          console.error("❌ Balance WebSocket error:", event);
           setError("WebSocket connection error");
         };
 
         ws.onclose = () => {
-          console.log("🔌 PendingOrders WebSocket disconnected");
+          console.log("🔌 Balance WebSocket disconnected");
           setConnected(false);
 
           if (!shouldConnectRef.current) {
@@ -211,12 +200,25 @@ export const usePendingOrders = (
 
         wsRef.current = ws;
       } catch (err) {
-        console.error("❌ Failed to connect WebSocket:", err);
+        console.error("❌ Failed to connect Balance WebSocket:", err);
         setError("Failed to connect WebSocket");
       }
     },
-    [symbol, hideOtherPairs]
+    [symbol, walletType]
   );
+
+  // Function to send refresh message to WebSocket
+  const refresh = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({
+          action: "refresh",
+          timestamp: Date.now(),
+        })
+      );
+      console.log("🔄 Sent refresh request to Balance WebSocket");
+    }
+  }, []);
 
   useEffect(() => {
     // Only initialize if user is authenticated (has token)
@@ -237,7 +239,7 @@ export const usePendingOrders = (
       }
 
       refreshTimerRef.current = setTimeout(async () => {
-        console.log("⏰ Time to refresh listenKey...");
+        console.log("⏰ Time to refresh balance listenKey...");
         const result = await refreshListenKey(listenKey);
         if (result) {
           const { listenKey: newListenKey, expiresIn } = result;
@@ -265,7 +267,7 @@ export const usePendingOrders = (
         const { listenKey, expiresIn, expiresAt } = listenKeyData;
 
         console.log(
-          `✅ ListenKey created: ${listenKey.substring(
+          `✅ Balance ListenKey created: ${listenKey.substring(
             0,
             8
           )}... (expires in ${expiresIn}s)`
@@ -280,7 +282,7 @@ export const usePendingOrders = (
 
         return listenKey;
       } catch (err) {
-        console.error("❌ Failed to create listenKey:", err);
+        console.error("❌ Failed to create balance listenKey:", err);
         setError("Failed to create listenKey");
         return null;
       }
@@ -322,7 +324,7 @@ export const usePendingOrders = (
         clearTimeout(reconnectTimerRef.current);
       }
     };
-  }, [symbol, hideOtherPairs, connectWebSocket, refreshListenKey]);
+  }, [symbol, walletType, connectWebSocket, refreshListenKey]);
 
-  return { orders, loading, error, connected };
+  return { balances, loading, error, connected, refresh };
 };

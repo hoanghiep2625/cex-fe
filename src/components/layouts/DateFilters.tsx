@@ -82,7 +82,9 @@ export default function DateFilters({ onDateRangeChange }: DateFiltersProps) {
           key={filter}
           onClick={() => handleDateFilterClick(filter)}
           className={`px-2 py-1 text-[12px] font-semibold rounded-sm text-[#9c9c9c] cursor-pointer ${
-            dateFilter === filter ? "bg-[#29313D] text-white" : ""
+            dateFilter === filter
+              ? "dark:bg-[#29313D] bg-gray-100 dark:text-white text-black"
+              : ""
           }`}
         >
           {filter}
@@ -96,28 +98,28 @@ export default function DateFilters({ onDateRangeChange }: DateFiltersProps) {
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="cursor-pointer px-3 py-1 text-[12px] w-[120px] rounded-sm font-semibold text-white focus:outline-none"
+          className="cursor-pointer px-3 py-1 text-[12px] w-[120px] rounded-sm font-semibold dark:text-white text-black focus:outline-none"
         />
         <span className="text-[#9c9c9c]">
-          <FaArrowRight width={2} height={2} />
+          <FaArrowRight className="w-3 h-3" />
         </span>
         <input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="cursor-pointer px-3 py-1 text-[12px] w-[120px] rounded-sm font-semibold text-white focus:outline-none"
+          className="cursor-pointer px-3 py-1 text-[12px] w-[120px] rounded-sm font-semibold dark:text-white text-black focus:outline-none"
         />
       </div>
 
       <button
         onClick={handleSearch}
-        className="px-3 py-1 text-[12px] text-white bg-[#29313D] rounded-sm font-semibold cursor-pointer"
+        className="px-3 py-1 text-[12px] dark:bg-[#29313D] bg-gray-100 dark:text-white text-black rounded-sm font-semibold cursor-pointer"
       >
         Tìm
       </button>
       <button
         onClick={handleReset}
-        className="px-3 py-1 text-[12px] text-white font-semibold rounded-sm cursor-pointer"
+        className="px-3 py-1 text-[12px] dark:text-white text-black font-semibold rounded-sm cursor-pointer"
       >
         Đặt lại
       </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useBalance } from "@/hooks/useBalance";
 import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
@@ -10,25 +11,10 @@ import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
 import { LuCircleAlert, LuPlus } from "react-icons/lu";
 import { IoMdArrowDropdown } from "react-icons/io";
-import { useQuery } from "@tanstack/react-query";
-export interface Balance {
-  id: string;
-  user_id: number;
-  currency: string;
-  wallet_type: string;
-  available: string;
-  locked: string;
-  created_at: string;
-  updated_at: string;
-  asset: Asset;
-}
-export interface Asset {
-  code: string;
-  precision: number;
-  created_at: string;
-}
+import ConnectionStatus from "@/components/ui/ConnectionStatus";
 export default function OrderEntryPanel({
   pair,
+  type,
 }: {
   pair: string;
   type: string;
@@ -37,18 +23,17 @@ export default function OrderEntryPanel({
     "limit"
   );
   const { loading, isAuthenticated } = useAuth();
-  const { data, isLoading, refetch } = useQuery<Balance[]>({
-    queryKey: ["balances"],
-    queryFn: () =>
-      axiosInstance.get("/balance").then((r) => r.data?.data ?? r.data ?? []),
-    enabled: isAuthenticated && !loading,
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-    placeholderData: (prev) => prev,
-  });
-  const balances = data ?? [];
-
   const { symbol } = useSymbol();
+
+  const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
+
+  const {
+    balances,
+    loading: balanceLoading,
+    error: balanceError,
+    connected,
+  } = useBalance(pair.replace("_", ""), type);
+
   const [activeTab, setActiveTab] = useState("spot");
   const [buyPrice, setBuyPrice] = useState("");
   const [buyQty, setBuyQty] = useState("");
@@ -65,7 +50,6 @@ export default function OrderEntryPanel({
       ? (parseFloat(sellPrice) * parseFloat(sellQty)).toFixed(8)
       : "0";
 
-  // Submit buy order
   const handleBuyOrder = async () => {
     if (!buyPrice || !buyQty) {
       toast.error("Vui lòng nhập giá và số lượng");
@@ -92,7 +76,6 @@ export default function OrderEntryPanel({
       toast.success(`Lệnh mua thành công!`);
       setBuyPrice("");
       setBuyQty("");
-      refetch();
     } catch (error) {
       const errorMsg =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -131,7 +114,6 @@ export default function OrderEntryPanel({
       toast.success(`Lệnh bán thành công!`);
       setSellPrice("");
       setSellQty("");
-      refetch();
     } catch (error) {
       const errorMsg =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -143,16 +125,19 @@ export default function OrderEntryPanel({
     }
   };
 
-  const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
-
+  // Get balances from WebSocket hook
   const baseAssetBalance =
-    balances.find((b) => b.currency === baseCurrency)?.available || "0";
+    balances && balances[baseCurrency]
+      ? parseFloat(balances[baseCurrency].available).toFixed(8)
+      : "0";
   const quoteAssetBalance =
-    balances.find((b) => b.currency === quoteCurrency)?.available || "0";
+    balances && balances[quoteCurrency]
+      ? parseFloat(balances[quoteCurrency].available).toFixed(8)
+      : "0";
 
   return (
     <>
-      <div className="flex-1 dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col">
+      <div className="relative flex-1 dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col">
         {/* Account Type Tabs */}
         <div className="px-4 pt-3 dark:border-b dark:border-gray-700 border-b border-gray-200 flex items-center gap-6">
           <TabUnderline
@@ -269,8 +254,7 @@ export default function OrderEntryPanel({
                 </span>
                 <div className="flex items-center gap-1">
                   <span>
-                    {isLoading ? "-" : parseFloat(quoteAssetBalance).toFixed(8)}{" "}
-                    {quoteCurrency}
+                    {balanceLoading ? "-" : quoteAssetBalance} {quoteCurrency}
                   </span>
                   <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
                     <LuPlus
@@ -286,7 +270,7 @@ export default function OrderEntryPanel({
                   Mua tối đa
                 </span>
                 <span>
-                  {isLoading
+                  {balanceLoading
                     ? "--"
                     : (parseFloat(quoteAssetBalance) / 100000).toFixed(8)}{" "}
                   {baseCurrency}
@@ -352,8 +336,7 @@ export default function OrderEntryPanel({
                   Khả dụng
                 </span>
                 <span>
-                  {isLoading ? "-" : parseFloat(baseAssetBalance).toFixed(8)}{" "}
-                  {baseCurrency}
+                  {balanceLoading ? "-" : baseAssetBalance} {baseCurrency}
                 </span>
               </div>
               <div className="flex justify-between dark:text-white text-black">
@@ -361,7 +344,7 @@ export default function OrderEntryPanel({
                   Bán tối đa
                 </span>
                 <span>
-                  {isLoading
+                  {balanceLoading
                     ? "--"
                     : (parseFloat(baseAssetBalance) * 100000).toFixed(8)}{" "}
                   {quoteCurrency}
@@ -388,6 +371,7 @@ export default function OrderEntryPanel({
             )}
           </div>
         </div>
+        <ConnectionStatus connected={connected} />
       </div>
     </>
   );
