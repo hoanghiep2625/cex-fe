@@ -57,8 +57,11 @@ export function useMarketData(symbol: string, type = "spot") {
       "marketdata",
       { symbol, type },
       (msg: WebSocketMessage) => {
-        if (msg.action === "update")
-          setMarketData(msg.data as Record<string, unknown> | null);
+        if (msg.action === "update") {
+          console.log("📊 MarketData Update:", msg.data);
+          // Force new object reference to trigger re-render
+          setMarketData({ ...(msg.data as Record<string, unknown>) });
+        }
       }
     );
   }, [symbol, type, subscribe]);
@@ -140,12 +143,31 @@ export function useBalance(symbol: string, wallet_type = "FUNDING") {
   return { balances };
 }
 
-export function usePendingOrders(symbol?: string) {
+/**
+ * 🔄 Get pending orders (NEW, PARTIALLY_FILLED) - Tab: "Giao dịch đang chờ khớp lệnh"
+ */
+export function usePendingOrdersByUser(symbol?: string) {
   const [orders, setOrders] = useState<unknown[]>([]);
   const { subscribe } = useWebSocketContext();
 
   useEffect(() => {
-    return subscribe("orders", { symbol }, (msg: WebSocketMessage) => {
+    return subscribe("pending_orders", { symbol }, (msg: WebSocketMessage) => {
+      if (msg.action === "update") setOrders((msg.data as unknown[]) || []);
+    });
+  }, [symbol, subscribe]);
+
+  return { orders, total: orders.length };
+}
+
+/**
+ * 📋 Get all orders (no status filter) - Tab: "Lịch sử lệnh"
+ */
+export function useAllOrdersByUser(symbol?: string) {
+  const [orders, setOrders] = useState<unknown[]>([]);
+  const { subscribe } = useWebSocketContext();
+
+  useEffect(() => {
+    return subscribe("all_orders", { symbol }, (msg: WebSocketMessage) => {
       if (msg.action === "update") setOrders((msg.data as unknown[]) || []);
     });
   }, [symbol, subscribe]);

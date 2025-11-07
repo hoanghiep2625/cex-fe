@@ -12,13 +12,14 @@ import OrderEntryPanel from "@/components/trading/OrderEntryPanel";
 import ChartPanel from "@/components/chart/ChartPanel";
 import GlobalStatusBar from "@/components/common/GlobalStatusBar";
 import UserOrderManagementPanel from "@/components/trading/UserOrderManagementPanel";
+import MarketTitleUpdater from "@/components/market/MarketTitleUpdater";
 
 export default function TradePage() {
   const params = useParams();
   const searchParams = useSearchParams();
 
-  const pair = params.pair as string; // e.g., "BTC_USDT"
-  const type = searchParams.get("type") || "spot"; // Default to "spot"
+  const pair = params.pair as string;
+  const type = searchParams.get("type") || "spot";
 
   const { fetchSymbol } = useSymbol();
 
@@ -30,6 +31,7 @@ export default function TradePage() {
 
   return (
     <div>
+      <MarketTitleUpdater pair={pair} type={type} />
       <MenuBar />
       <div className="flex min-h-[900px] gap-1 mt-1 mx-1">
         <div className="flex-1 gap-1 flex flex-col">

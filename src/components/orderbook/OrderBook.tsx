@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
@@ -82,20 +82,33 @@ export default function OrderBook({
     refetchOnWindowFocus: false,
   });
 
+  // Market data state
+  const [marketData, setMarketData] = useState<{
+    price?: number;
+    currentPrice?: number;
+  } | null>(null);
+
   // Subscribe to WebSocket updates for market data
   const { marketData: wsMarketData } = useMarketData(
     symbolCode,
     type || "spot"
   );
 
-  // Get current price from market data
-  const marketData = useMemo(() => {
-    return (
-      (wsMarketData as { price?: number; currentPrice?: number } | null) ||
-      (initialMarketData as { price?: number; currentPrice?: number } | null) ||
-      null
-    );
-  }, [wsMarketData, initialMarketData]);
+  // Set initial market data
+  useEffect(() => {
+    if (initialMarketData) {
+      setMarketData(
+        initialMarketData as { price?: number; currentPrice?: number }
+      );
+    }
+  }, [initialMarketData]);
+
+  // Update when WebSocket sends new data
+  useEffect(() => {
+    if (wsMarketData) {
+      setMarketData(wsMarketData as { price?: number; currentPrice?: number });
+    }
+  }, [wsMarketData]);
 
   const currentPrice = marketData?.currentPrice || marketData?.price || 0;
 
@@ -261,93 +274,102 @@ export default function OrderBook({
           <option value="10">10</option>
         </select>
       </div>
+      {orderBookLoading ? (
+        <div></div>
+      ) : (
+        <div className="flex-1 flex flex-col">
+          <div className="px-4 py-2 text-[10px] text-gray-500 font-semibold grid grid-cols-3 gap-4">
+            <span>Giá ({data?.quote_asset})</span>
+            <span className="text-right">Số lượng ({data?.base_asset})</span>
+            <span className="text-right">Tổng</span>
+          </div>
+          <div className="flex-1 flex flex-col dark:text-white text-black relative">
+            <div className="flex-1 flex flex-col-reverse font-medium">
+              {asks.map((a, i) => {
+                const isHighlighted =
+                  hoveredAskIndex !== null && i <= hoveredAskIndex;
+                const isDirectHover = hoveredAskIndex === i;
+                return (
+                  <Row
+                    key={`ask-${a.price}-${a.quantity}-${i}`}
+                    level={a}
+                    isAsk
+                    index={i}
+                    isHighlighted={isHighlighted}
+                    isDirectHover={isDirectHover}
+                  />
+                );
+              })}
+            </div>
 
-      <div className="px-4 py-2 text-[10px] text-gray-500 font-semibold grid grid-cols-3 gap-4">
-        <span>Giá ({data?.quote_asset})</span>
-        <span className="text-right">Số lượng ({data?.base_asset})</span>
-        <span className="text-right">Tổng</span>
-      </div>
+            {/* Current Price - CENTER */}
+            <div className="px-4 py-3 flex justify-between items-center gap-2 z-10 dark:bg-[#181A20] bg-white">
+              <div>
+                <span
+                  className={`text-lg font-semibold flex items-center  ${
+                    trades[0]?.takerSide === "BUY"
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {fmt(currentPrice)}
+                  {trades[0]?.takerSide === "BUY" ? (
+                    <FaArrowUpLong className="text-green-400 text-sm" />
+                  ) : (
+                    <FaArrowDownLong className="text-red-400 text-sm" />
+                  )}
+                  <span className="text-gray-400 text-xs font-semibold">
+                    {" "}
+                    {"$"}
+                    {fmt(currentPrice)}
+                  </span>
+                </span>
+              </div>
 
-      <div className="flex-1 flex flex-col dark:text-white text-black relative">
-        <div className="flex-1 flex flex-col-reverse font-medium">
-          {asks.map((a, i) => {
-            const isHighlighted =
-              hoveredAskIndex !== null && i <= hoveredAskIndex;
-            const isDirectHover = hoveredAskIndex === i;
-            return (
-              <Row
-                key={`ask-${a.price}-${a.quantity}-${i}`}
-                level={a}
-                isAsk
-                index={i}
-                isHighlighted={isHighlighted}
-                isDirectHover={isDirectHover}
-              />
-            );
-          })}
-        </div>
+              <LuChevronRight className="text-gray-400 hover:text-black dark:hover:text-white" />
+            </div>
 
-        {/* Current Price - CENTER */}
-        <div className="px-4 py-3 flex justify-between items-center gap-2 z-10 dark:bg-[#181A20] bg-white">
-          <div>
-            <span
-              className={`text-lg font-semibold flex items-center  ${
-                trades[0]?.takerSide === "BUY"
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-            >
-              {fmt(currentPrice)}
-              {trades[0]?.takerSide === "BUY" ? (
-                <FaArrowUpLong className="text-green-400 text-sm" />
-              ) : (
-                <FaArrowDownLong className="text-red-400 text-sm" />
-              )}
-              <span className="text-gray-400 text-xs font-semibold">
-                {" "}
-                {"$"}
-                {fmt(currentPrice)}
+            {/* BIDS - No scroll */}
+            <div className="flex-1 font-medium">
+              {bids.map((b, i) => {
+                // Highlight từ row 0 (gần CENTER nhất) đến row được hover
+                const isHighlighted =
+                  hoveredBidIndex !== null && i <= hoveredBidIndex;
+                const isDirectHover = hoveredBidIndex === i;
+                return (
+                  <Row
+                    key={`bid-${b.price}-${b.quantity}-${i}`}
+                    level={b}
+                    index={i}
+                    isHighlighted={isHighlighted}
+                    isDirectHover={isDirectHover}
+                  />
+                );
+              })}
+            </div>
+          </div>
+          <div className="px-4 py-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="dark:text-white text-black">
+                B <span className="text-green-400">{buyPct.toFixed(1)}%</span>
               </span>
-            </span>
+              <div className="flex-1 flex h-1 bg-gray-700 rounded-full overflow-hidden">
+                <div className="bg-green-400" style={{ width: `${buyPct}%` }} />
+                <div
+                  className="bg-red-400"
+                  style={{ width: `${100 - buyPct}%` }}
+                />
+              </div>
+              <span className="dark:text-white text-black">
+                <span className="text-red-400">
+                  {(100 - buyPct).toFixed(1)}%
+                </span>{" "}
+                S
+              </span>
+            </div>
           </div>
-
-          <LuChevronRight className="text-gray-400 hover:text-black dark:hover:text-white" />
         </div>
-
-        {/* BIDS - No scroll */}
-        <div className="flex-1 font-medium">
-          {bids.map((b, i) => {
-            // Highlight từ row 0 (gần CENTER nhất) đến row được hover
-            const isHighlighted =
-              hoveredBidIndex !== null && i <= hoveredBidIndex;
-            const isDirectHover = hoveredBidIndex === i;
-            return (
-              <Row
-                key={`bid-${b.price}-${b.quantity}-${i}`}
-                level={b}
-                index={i}
-                isHighlighted={isHighlighted}
-                isDirectHover={isDirectHover}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="px-4 py-3 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="dark:text-white text-black">
-            B <span className="text-green-400">{buyPct.toFixed(1)}%</span>
-          </span>
-          <div className="flex-1 flex h-1 bg-gray-700 rounded-full overflow-hidden">
-            <div className="bg-green-400" style={{ width: `${buyPct}%` }} />
-            <div className="bg-red-400" style={{ width: `${100 - buyPct}%` }} />
-          </div>
-          <span className="dark:text-white text-black">
-            <span className="text-red-400">{(100 - buyPct).toFixed(1)}%</span> S
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

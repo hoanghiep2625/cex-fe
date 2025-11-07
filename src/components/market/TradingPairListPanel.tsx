@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
@@ -17,7 +17,6 @@ interface TickerData {
 }
 
 export default function TradingPairListPanel({
-  pair,
   type,
 }: {
   pair: string;
@@ -25,6 +24,7 @@ export default function TradingPairListPanel({
 }) {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
+  const [tickers, setTickers] = useState<TickerData[]>([]);
 
   // Fetch initial tickers data from REST API (filter by quote_asset)
   const { data: initialTickers } = useQuery<TickerData[]>({
@@ -46,13 +46,19 @@ export default function TradingPairListPanel({
   // Subscribe to WebSocket updates
   const { tickers: wsTickers } = useTicker(activeTab, type);
 
-  // Use WebSocket update if available, otherwise use initial data from REST API
-  const tickers = useMemo(() => {
-    const ws = wsTickers as TickerData[] | null;
-    if (Array.isArray(ws) && ws.length > 0) return ws;
-    if (Array.isArray(initialTickers)) return initialTickers;
-    return [];
-  }, [wsTickers, initialTickers]);
+  // Set initial data from API
+  useEffect(() => {
+    if (initialTickers && Array.isArray(initialTickers)) {
+      setTickers(initialTickers);
+    }
+  }, [initialTickers]);
+
+  // Update when WebSocket sends new data
+  useEffect(() => {
+    if (wsTickers && Array.isArray(wsTickers) && wsTickers.length > 0) {
+      setTickers(wsTickers as TickerData[]);
+    }
+  }, [wsTickers]);
 
   const tradingPairs = Array.isArray(tickers)
     ? tickers.map((sym) => ({

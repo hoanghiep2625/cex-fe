@@ -46,10 +46,24 @@ export default function MarketHeader({
           .then((r) => r.data?.data),
       refetchOnWindowFocus: false,
     });
+
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
   const { marketData: wsMarketData } = useMarketData(symbol, type);
-  const marketData = useMemo(() => {
-    return (wsMarketData as MarketData | null) || initialMarketData || null;
-  }, [wsMarketData, initialMarketData]);
+
+  // Set initial data from API (only if no WS data yet)
+  useEffect(() => {
+    if (initialMarketData) {
+      setMarketData(initialMarketData);
+    }
+  }, [initialMarketData]);
+
+  // Update when WebSocket sends new data (priority over API data)
+  useEffect(() => {
+    if (wsMarketData) {
+      console.log("🔄 MarketHeader WS update:", wsMarketData);
+      setMarketData(wsMarketData as MarketData);
+    }
+  }, [wsMarketData]);
 
   const { data, isLoading: symbolInfoLoading } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol],

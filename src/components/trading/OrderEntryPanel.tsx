@@ -13,7 +13,7 @@ import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
 import { LuCircleAlert, LuPlus } from "react-icons/lu";
@@ -31,7 +31,7 @@ export default function OrderEntryPanel({
   const [orderType, setOrderType] = useState<"limit" | "market" | "stop">(
     "limit"
   );
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const { symbol } = useSymbol();
 
   const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
@@ -40,8 +40,6 @@ export default function OrderEntryPanel({
     type === "spot" ? "spot" : type === "futures" ? "future" : "funding";
 
   const symbolCode = pair.replace("_", "");
-
-  // Fetch initial balance data from REST API
   const { data: initialBalances, isLoading: balanceLoading } =
     useQuery<BalanceData>({
       queryKey: ["balance", symbolCode, walletType],
@@ -52,14 +50,11 @@ export default function OrderEntryPanel({
           })
           .then((r) => r.data?.data || {}),
       refetchOnWindowFocus: false,
-      enabled: isAuthenticated, // Only fetch if authenticated
+      enabled: isAuthenticated,
     });
 
-  // Subscribe to WebSocket updates
   const { balances: wsBalances } = useBalance(symbolCode, walletType);
   const { marketData: wsMarketData } = useMarketData(symbolCode, type);
-
-  // Fetch initial market data from REST API
   const { data: initialMarketData } = useQuery({
     queryKey: ["marketData", symbolCode, type],
     queryFn: () =>
@@ -71,28 +66,44 @@ export default function OrderEntryPanel({
     refetchOnWindowFocus: false,
   });
 
-  // Use WebSocket update if available, otherwise use initial data from REST API
-  const balances = useMemo(() => {
-    const ws = wsBalances as BalanceData | null;
-    if (ws && Object.keys(ws).length > 0) return ws;
-    if (initialBalances && Object.keys(initialBalances).length > 0)
-      return initialBalances;
-    return null;
-  }, [wsBalances, initialBalances]);
+  const [balances, setBalances] = useState<BalanceData | null>(null);
+  const [marketData, setMarketData] = useState<{
+    price?: number;
+    currentPrice?: number;
+  } | null>(null);
 
-  // Get current price from market data
-  const marketData = useMemo(() => {
-    return (
-      (wsMarketData as { price?: number; currentPrice?: number } | null) ||
-      (initialMarketData as { price?: number; currentPrice?: number } | null) ||
-      null
-    );
-  }, [wsMarketData, initialMarketData]);
+  // Set initial balances
+  useEffect(() => {
+    if (initialBalances && Object.keys(initialBalances).length > 0) {
+      setBalances(initialBalances);
+    }
+  }, [initialBalances]);
+
+  // Update balances from WebSocket
+  useEffect(() => {
+    if (wsBalances && Object.keys(wsBalances as Record<string, unknown>).length > 0) {
+      setBalances(wsBalances as BalanceData);
+    }
+  }, [wsBalances]);
+
+  // Set initial market data
+  useEffect(() => {
+    if (initialMarketData) {
+      setMarketData(
+        initialMarketData as { price?: number; currentPrice?: number }
+      );
+    }
+  }, [initialMarketData]);
+
+  // Update market data from WebSocket
+  useEffect(() => {
+    if (wsMarketData) {
+      setMarketData(wsMarketData as { price?: number; currentPrice?: number });
+    }
+  }, [wsMarketData]);
 
   const currentPrice = marketData?.currentPrice || marketData?.price || 0;
-
   const loading = balanceLoading;
-
   const [activeTab, setActiveTab] = useState("spot");
   const [buyPrice, setBuyPrice] = useState("");
   const [buyQty, setBuyQty] = useState("");
@@ -197,243 +208,246 @@ export default function OrderEntryPanel({
   return (
     <>
       <div className="relative flex-1 dark:bg-[#181A20] bg-white rounded-[10px] dark:text-white text-black flex flex-col">
-        {/* Account Type Tabs */}
-        <div className="px-4 pt-3 dark:border-b dark:border-gray-700 border-b border-gray-200 flex items-center gap-6">
-          <TabUnderline
-            className="text-xs font-semibold pb-2"
-            active={activeTab === "spot"}
-            onClick={() => setActiveTab("spot")}
-          >
-            Spot
-          </TabUnderline>
-          <TabUnderline
-            className="text-xs font-semibold pb-2"
-            active={activeTab === "cross"}
-            onClick={() => setActiveTab("cross")}
-          >
-            Cross Margin
-          </TabUnderline>
-          <TabUnderline
-            className="text-xs font-semibold pb-2"
-            active={activeTab === "isolated"}
-            onClick={() => setActiveTab("isolated")}
-          >
-            Isolated
-          </TabUnderline>
-          <TabUnderline
-            className="text-xs font-semibold pb-2"
-            active={activeTab === "luoi"}
-            onClick={() => setActiveTab("luoi")}
-          >
-            Lưới
-          </TabUnderline>
-        </div>
-
-        {/* Order Type Selection */}
-        <div className="px-4 py-3 flex items-center gap-6">
-          <button
-            onClick={() => setOrderType("limit")}
-            className={`text-[12px] font-semibold ${
-              orderType === "limit"
-                ? "dark:text-white text-black"
-                : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
-            }`}
-          >
-            Giới hạn
-          </button>
-          <button
-            onClick={() => setOrderType("market")}
-            className={`text-[12px] font-semibold ${
-              orderType === "market"
-                ? "dark:text-white text-black"
-                : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
-            }`}
-          >
-            Thị trường
-          </button>
-          <button
-            onClick={() => setOrderType("stop")}
-            className={`text-[12px] font-semibold flex items-center gap-1 ${
-              orderType === "stop"
-                ? "dark:text-white text-black"
-                : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
-            }`}
-          >
-            Stop Limit
-            <span className="text-xs">
-              <IoMdArrowDropdown className="w-4 h-4" />
-            </span>
-          </button>
-          <button className="text-gray-400 hover:dark:text-gray-200 hover:text-gray-800">
-            <LuCircleAlert width={16} height={16} />
-          </button>
-        </div>
-
-        {/* Buy/Sell Forms */}
-        <div className="flex-1 px-4 pb-3 grid grid-cols-2 gap-4 overflow-y-auto">
-          {/* BUY FORM */}
-          <div className="space-y-3">
-            {/* Giá */}
-            <NumberInput
-              label="Giá"
-              value={buyPrice}
-              onChange={setBuyPrice}
-              unit={quoteCurrency}
-              showButtons={true}
-            />
-
-            <NumberInput
-              label="Số lượng"
-              value={buyQty}
-              onChange={setBuyQty}
-              unit={baseCurrency}
-              showButtons={true}
-            />
-
-            {/* Slider */}
-            <div className="">
-              <input type="range" className="w-full h-0.5 " />
+        {authLoading ? (
+          <div></div>
+        ) : (
+          <div>
+            <div className="px-4 pt-3 dark:border-b dark:border-gray-700 border-b border-gray-200 flex items-center gap-6">
+              <TabUnderline
+                className="text-xs font-semibold pb-2"
+                active={activeTab === "spot"}
+                onClick={() => setActiveTab("spot")}
+              >
+                Spot
+              </TabUnderline>
+              <TabUnderline
+                className="text-xs font-semibold pb-2"
+                active={activeTab === "cross"}
+                onClick={() => setActiveTab("cross")}
+              >
+                Cross Margin
+              </TabUnderline>
+              <TabUnderline
+                className="text-xs font-semibold pb-2"
+                active={activeTab === "isolated"}
+                onClick={() => setActiveTab("isolated")}
+              >
+                Isolated
+              </TabUnderline>
+              <TabUnderline
+                className="text-xs font-semibold pb-2"
+                active={activeTab === "luoi"}
+                onClick={() => setActiveTab("luoi")}
+              >
+                Lưới
+              </TabUnderline>
             </div>
 
-            <NumberInput
-              label="Tổng"
-              value={buyTotal}
-              onChange={() => {}}
-              unit={quoteCurrency}
-              readOnly={true}
-              showButtons={false}
-              rounded="rounded-md"
-            />
-
-            {/* Available - BUY */}
-            <div className="text-xs space-y-1">
-              <div className="flex justify-between dark:text-white text-black">
-                <span className="dark:text-gray-500 text-gray-400">
-                  Khả dụng
+            <div className="px-4 py-3 flex items-center gap-6">
+              <button
+                onClick={() => setOrderType("limit")}
+                className={`text-[12px] font-semibold ${
+                  orderType === "limit"
+                    ? "dark:text-white text-black"
+                    : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
+                }`}
+              >
+                Giới hạn
+              </button>
+              <button
+                onClick={() => setOrderType("market")}
+                className={`text-[12px] font-semibold ${
+                  orderType === "market"
+                    ? "dark:text-white text-black"
+                    : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
+                }`}
+              >
+                Thị trường
+              </button>
+              <button
+                onClick={() => setOrderType("stop")}
+                className={`text-[12px] font-semibold flex items-center gap-1 ${
+                  orderType === "stop"
+                    ? "dark:text-white text-black"
+                    : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
+                }`}
+              >
+                Stop Limit
+                <span className="text-xs">
+                  <IoMdArrowDropdown className="w-4 h-4" />
                 </span>
-                <div className="flex items-center gap-1">
-                  <span>
-                    {loading ? "-" : quoteAssetBalance} {quoteCurrency}
-                  </span>
-                  <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
-                    <LuPlus
-                      width={12}
-                      height={12}
-                      className="text-white dark:text-[#181A20]"
-                    />
+              </button>
+              <button className="text-gray-400 hover:dark:text-gray-200 hover:text-gray-800">
+                <LuCircleAlert width={16} height={16} />
+              </button>
+            </div>
+
+            <div className="flex-1 px-4 pb-3 grid grid-cols-2 gap-4 overflow-y-auto">
+              {/* BUY FORM */}
+              <div className="space-y-3">
+                {/* Giá */}
+                <NumberInput
+                  label="Giá"
+                  value={buyPrice}
+                  onChange={setBuyPrice}
+                  unit={quoteCurrency}
+                  showButtons={true}
+                />
+
+                <NumberInput
+                  label="Số lượng"
+                  value={buyQty}
+                  onChange={setBuyQty}
+                  unit={baseCurrency}
+                  showButtons={true}
+                />
+
+                {/* Slider */}
+                <div className="">
+                  <input type="range" className="w-full h-0.5 " />
+                </div>
+
+                <NumberInput
+                  label="Tổng"
+                  value={buyTotal}
+                  onChange={() => {}}
+                  unit={quoteCurrency}
+                  readOnly={true}
+                  showButtons={false}
+                  rounded="rounded-md"
+                />
+
+                {/* Available - BUY */}
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between dark:text-white text-black">
+                    <span className="dark:text-gray-500 text-gray-400">
+                      Khả dụng
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span>
+                        {loading ? "--" : quoteAssetBalance} {quoteCurrency}
+                      </span>
+                      <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
+                        <LuPlus
+                          width={12}
+                          height={12}
+                          className="text-white dark:text-[#181A20]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between dark:text-white text-black">
+                    <span className="underline dark:text-gray-500 text-gray-400">
+                      Mua tối đa
+                    </span>
+                    <span>
+                      {loading || !currentPrice
+                        ? "--"
+                        : (
+                            parseFloat(quoteAssetBalance) / currentPrice
+                          ).toFixed(8)}{" "}
+                      {baseCurrency}
+                    </span>
                   </div>
                 </div>
+
+                {!isAuthenticated ? (
+                  <Link
+                    href="/login"
+                    className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                  >
+                    Đăng nhập
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleBuyOrder}
+                    disabled={buyLoading}
+                    className="w-full bg-green-400 hover:bg-green-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                  >
+                    {buyLoading ? "Đang xử lý..." : `Mua ${baseCurrency}`}
+                  </button>
+                )}
               </div>
-              <div className="flex justify-between dark:text-white text-black">
-                <span className="underline dark:text-gray-500 text-gray-400">
-                  Mua tối đa
-                </span>
-                <span>
-                  {loading || !currentPrice
-                    ? "--"
-                    : (parseFloat(quoteAssetBalance) / currentPrice).toFixed(
-                        8
-                      )}{" "}
-                  {baseCurrency}
-                </span>
+
+              {/* SELL FORM */}
+              <div className="space-y-3">
+                <NumberInput
+                  label="Giá"
+                  value={sellPrice}
+                  onChange={setSellPrice}
+                  unit={quoteCurrency}
+                  showButtons={true}
+                />
+
+                <NumberInput
+                  label="Số lượng"
+                  value={sellQty}
+                  onChange={setSellQty}
+                  unit={baseCurrency}
+                  showButtons={true}
+                />
+
+                {/* Slider */}
+                <div className="">
+                  <input type="range" className="w-full h-0.5 " />
+                </div>
+
+                <NumberInput
+                  label="Tổng"
+                  value={sellTotal}
+                  onChange={() => {}}
+                  unit={quoteCurrency}
+                  readOnly={true}
+                  showButtons={false}
+                  rounded="rounded-md"
+                />
+
+                {/* Available - SELL */}
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between dark:text-white text-black">
+                    <span className="dark:text-gray-500 text-gray-400">
+                      Khả dụng
+                    </span>
+                    <span>
+                      {loading ? "-" : baseAssetBalance} {baseCurrency}
+                    </span>
+                  </div>
+                  <div className="flex justify-between dark:text-white text-black">
+                    <span className="underline dark:text-gray-500 text-gray-400">
+                      Bán tối đa
+                    </span>
+                    <span>
+                      {loading || !currentPrice
+                        ? "--"
+                        : (parseFloat(baseAssetBalance) * currentPrice).toFixed(
+                            8
+                          )}{" "}
+                      {quoteCurrency}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Sell Button */}
+                {!isAuthenticated ? (
+                  <Link
+                    href="/login"
+                    className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                  >
+                    Đăng nhập
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleSellOrder}
+                    disabled={sellLoading}
+                    className="w-full bg-red-400 hover:bg-red-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                  >
+                    {sellLoading ? "Đang xử lý..." : `Bán ${baseCurrency}`}
+                  </button>
+                )}
               </div>
             </div>
-
-            {!isAuthenticated ? (
-              <Link
-                href="/login"
-                className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-              >
-                Đăng nhập
-              </Link>
-            ) : (
-              <button
-                onClick={handleBuyOrder}
-                disabled={buyLoading}
-                className="w-full bg-green-400 hover:bg-green-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-              >
-                {buyLoading ? "Đang xử lý..." : `Mua ${baseCurrency}`}
-              </button>
-            )}
           </div>
-
-          {/* SELL FORM */}
-          <div className="space-y-3">
-            <NumberInput
-              label="Giá"
-              value={sellPrice}
-              onChange={setSellPrice}
-              unit={quoteCurrency}
-              showButtons={true}
-            />
-
-            <NumberInput
-              label="Số lượng"
-              value={sellQty}
-              onChange={setSellQty}
-              unit={baseCurrency}
-              showButtons={true}
-            />
-
-            {/* Slider */}
-            <div className="">
-              <input type="range" className="w-full h-0.5 " />
-            </div>
-
-            <NumberInput
-              label="Tổng"
-              value={sellTotal}
-              onChange={() => {}}
-              unit={quoteCurrency}
-              readOnly={true}
-              showButtons={false}
-              rounded="rounded-md"
-            />
-
-            {/* Available - SELL */}
-            <div className="text-xs space-y-1">
-              <div className="flex justify-between dark:text-white text-black">
-                <span className="dark:text-gray-500 text-gray-400">
-                  Khả dụng
-                </span>
-                <span>
-                  {loading ? "-" : baseAssetBalance} {baseCurrency}
-                </span>
-              </div>
-              <div className="flex justify-between dark:text-white text-black">
-                <span className="underline dark:text-gray-500 text-gray-400">
-                  Bán tối đa
-                </span>
-                <span>
-                  {loading || !currentPrice
-                    ? "--"
-                    : (parseFloat(baseAssetBalance) * currentPrice).toFixed(
-                        8
-                      )}{" "}
-                  {quoteCurrency}
-                </span>
-              </div>
-            </div>
-
-            {/* Sell Button */}
-            {!isAuthenticated ? (
-              <Link
-                href="/login"
-                className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-              >
-                Đăng nhập
-              </Link>
-            ) : (
-              <button
-                onClick={handleSellOrder}
-                disabled={sellLoading}
-                className="w-full bg-red-400 hover:bg-red-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-              >
-                {sellLoading ? "Đang xử lý..." : `Bán ${baseCurrency}`}
-              </button>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </>
   );

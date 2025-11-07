@@ -32,7 +32,6 @@ export default function ChartPanel({
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [isDark, setIsDark] = useState(true);
 
-  // Map timeframe to interval for API - memoized để tránh reconnect
   const interval = useMemo(() => {
     const map: Record<string, string> = {
       "1": "1m",
@@ -64,7 +63,14 @@ export default function ChartPanel({
         })
         .then((r) => {
           const data = r.data?.data || [];
-          return data.map((candle: any) => ({
+          return data.map((candle: {
+            open_time: number;
+            open: string;
+            high: string;
+            low: string;
+            close: string;
+            volume: string;
+          }) => ({
             open_time: candle.open_time,
             open: candle.open,
             high: candle.high,
@@ -76,10 +82,7 @@ export default function ChartPanel({
     refetchOnWindowFocus: false,
   });
 
-  // Subscribe to WebSocket updates
   const { candles: wsCandles } = useCandles(symbolCode, interval, type, 500);
-
-  // Use WebSocket update if available, otherwise use initial data from REST API
   const typedCandles = useMemo(() => {
     const ws = wsCandles as Candle[] | null;
     if (ws && ws.length > 0) return ws;

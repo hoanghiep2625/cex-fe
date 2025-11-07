@@ -10,5 +10,5 @@ export {
   useTicker,
   useGlobalTicker,
   useBalance,
-  usePendingOrders,
+  
 } from "./useWebSocket";

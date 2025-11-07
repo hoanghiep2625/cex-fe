@@ -41,7 +41,7 @@ interface WebSocketProviderProps {
 
 export function WebSocketProvider({
   children,
-  url = "ws://localhost:3000/ws",
+  url = process.env.NEXT_PUBLIC_WS_URL || "wss://cex.tahoanghiep.com/ws",
 }: WebSocketProviderProps) {
   const { listenKey, listenKeyFetched } = useListenKey();
   const wsRef = useRef<WebSocket | null>(null);
