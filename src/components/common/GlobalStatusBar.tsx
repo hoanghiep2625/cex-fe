@@ -1,25 +1,63 @@
 "use client";
 
 import AdjustIcon from "@/components/icons/AdjustIcon";
-import { useTicker } from "@/hooks/useTicker";
+import { useGlobalTicker } from "@/hooks/useWebSocket";
+import axiosInstance from "@/lib/axiosInstance";
 import { formatPrice } from "@/lib/formatters";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { LuSignal } from "react-icons/lu";
 
-export default function GlobalStatusBar() {
-  const { tickers, connected } = useTicker({
-    quoteAsset: "USDT",
-    type: "spot",
+interface TickerData {
+  base_asset: string;
+  quote_asset: string;
+  price: number;
+  priceChangePercent24h: number;
+}
+
+export default function GlobalStatusBar({
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
+  // Fetch initial tickers data from REST API
+  const { data: initialTickers } = useQuery<TickerData[]>({
+    queryKey: ["tickers", type],
+    queryFn: () =>
+      axiosInstance
+        .get("/symbols/tickers", {
+          params: {
+            type,
+            status: "TRADING",
+          },
+        })
+        .then((r) => r.data?.data?.data || []),
+    refetchOnWindowFocus: false,
   });
 
-  const tradingPairs =
-    tickers?.map((sym) => ({
-      symbol: `${sym.base_asset}/${sym.quote_asset}`,
-      price: formatPrice(sym.price || 0),
-      change: `${sym.priceChangePercent24h >= 0 ? "+" : ""}${formatPrice(
-        Math.abs(sym.priceChangePercent24h || 0)
-      )}%`,
-    })) || [];
+  // Subscribe to WebSocket updates
+  const { tickers: wsTickers } = useGlobalTicker(type);
 
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  const tickers = useMemo(() => {
+    const ws = wsTickers as TickerData[] | null;
+    if (Array.isArray(ws) && ws.length > 0) return ws;
+    if (Array.isArray(initialTickers)) return initialTickers;
+    return [];
+  }, [wsTickers, initialTickers]);
+
+  const tradingPairs = Array.isArray(tickers)
+    ? tickers.map((sym) => ({
+        symbol: `${sym.base_asset}/${sym.quote_asset}`,
+        price: formatPrice(sym.price || 0),
+        change: `${sym.priceChangePercent24h >= 0 ? "+" : ""}${formatPrice(
+          Math.abs(sym.priceChangePercent24h || 0)
+        )}%`,
+      }))
+    : [];
+
+  const connected = true; // Will be updated with actual connection status
   const connectionStatus = connected ? "Kết nối ổn định" : "Mất kết nối";
 
   return (

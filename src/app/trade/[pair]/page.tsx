@@ -22,7 +22,6 @@ export default function TradePage() {
 
   const { fetchSymbol } = useSymbol();
 
-  // Fetch symbol data khi pair hoặc type thay đổi
   useEffect(() => {
     if (pair) {
       fetchSymbol(pair, type);
@@ -33,24 +32,23 @@ export default function TradePage() {
     <div>
       <MenuBar />
       <div className="flex min-h-[900px] gap-1 mt-1 mx-1">
-        {/* <div className="bg-red-500 w-full h-15"></div> */}
         <div className="flex-1 gap-1 flex flex-col">
           <MarketHeader pair={pair} type={type} />
           <div className="flex-1 flex gap-1">
             <OrderBook pair={pair} type={type} />
             <div className="flex flex-1 flex-col gap-1">
-              <ChartPanel pair={pair} />
+              <ChartPanel pair={pair} type={type} />
               <OrderEntryPanel pair={pair} type={type} />
             </div>
           </div>
         </div>
         <div className="w-[23%] h-[1005px] flex flex-col gap-1">
-          <TradingPairListPanel />
+          <TradingPairListPanel pair={pair} type={type} />
           <RecentTrades pair={pair} />
         </div>
       </div>
       <UserOrderManagementPanel pair={pair} />
-      <GlobalStatusBar />
+      <GlobalStatusBar pair={pair} type={type} />
     </div>
   );
 }

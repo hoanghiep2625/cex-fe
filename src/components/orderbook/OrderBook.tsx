@@ -1,17 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { useOrderBook } from "@/hooks/useOrderBook";
+import { useState, useMemo } from "react";
 import { useSymbol } from "@/context/SymbolContext";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
 import { Symbol } from "@/types";
-import { useRecentTrades } from "@/hooks/useRecentTrades";
 import { FaArrowUpLong, FaArrowDownLong } from "react-icons/fa6";
 import { PiApproximateEqualsBold } from "react-icons/pi";
 import { LuChevronRight } from "react-icons/lu";
-import { fmt } from "@/lib/formatters";
+import { fmt, formatQty } from "@/lib/formatters";
+import { useOrderBook, useRecentTrades, useMarketData } from "@/hooks";
+
+interface OrderBookLevel {
+  price: number | string;
+  quantity: number | string;
+  total: number | string;
+  percentage: number | string;
+  cumulativeAvgPrice?: number;
+  cumulativeTotalQty?: number;
+  cumulativeTotalValue?: number;
+}
+
+interface OrderBookData {
+  bids: OrderBookLevel[];
+  asks: OrderBookLevel[];
+}
+
+interface TradeData {
+  id: string;
+  price: string;
+  quantity: string;
+  time: number;
+  takerSide: "BUY" | "SELL";
+}
 
 export default function OrderBook({
   pair,
@@ -24,13 +45,59 @@ export default function OrderBook({
   const [hoveredAskIndex, setHoveredAskIndex] = useState<number | null>(null);
   const [hoveredBidIndex, setHoveredBidIndex] = useState<number | null>(null);
   const { symbol } = useSymbol();
+  const symbolCode = symbol?.code || pair.replace("_", "");
 
-  const { orderBook, connected } = useOrderBook(
-    symbol?.code || pair.replace("_", ""),
+  const { data: initialOrderBook, isLoading: orderBookLoading } =
+    useQuery<OrderBookData>({
+      queryKey: ["orderbook", symbolCode],
+      queryFn: () =>
+        axiosInstance
+          .get(`/orderbook/${symbolCode}/depth`, { params: { limit: 19 } })
+          .then((r) => r.data?.data),
+      refetchOnWindowFocus: false,
+    });
+
+  // Subscribe to WebSocket updates
+  const { orderBook: wsOrderBook } = useOrderBook(symbolCode, type || "spot");
+
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  const orderBook = useMemo(() => {
+    return (wsOrderBook as OrderBookData | null) || initialOrderBook || null;
+  }, [wsOrderBook, initialOrderBook]);
+
+  const { trades: rawTrades } = useRecentTrades(
+    symbol?.code || pair.replace("_", "")
+  );
+  const trades = (rawTrades as TradeData[]) || [];
+
+  // Fetch initial market data from REST API
+  const { data: initialMarketData } = useQuery({
+    queryKey: ["marketData", symbolCode, type],
+    queryFn: () =>
+      axiosInstance
+        .get(`/symbols/market-data/${symbolCode}`, {
+          params: { type },
+        })
+        .then((r) => r.data?.data || {}),
+    refetchOnWindowFocus: false,
+  });
+
+  // Subscribe to WebSocket updates for market data
+  const { marketData: wsMarketData } = useMarketData(
+    symbolCode,
     type || "spot"
   );
 
-  const { trades } = useRecentTrades(symbol?.code || pair.replace("_", ""));
+  // Get current price from market data
+  const marketData = useMemo(() => {
+    return (
+      (wsMarketData as { price?: number; currentPrice?: number } | null) ||
+      (initialMarketData as { price?: number; currentPrice?: number } | null) ||
+      null
+    );
+  }, [wsMarketData, initialMarketData]);
+
+  const currentPrice = marketData?.currentPrice || marketData?.price || 0;
 
   const { data } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol?.code || pair.replace("_", "")],
@@ -41,15 +108,28 @@ export default function OrderBook({
   });
 
   const { asks = [], bids = [] } = orderBook || {};
-  const totalBids = bids.reduce((s, b) => s + b.quantity, 0);
-  const totalAsks = asks.reduce((s, a) => s + a.quantity, 0);
+  const totalBids = bids.reduce(
+    (s, b) =>
+      s +
+      (typeof b.quantity === "string" ? parseFloat(b.quantity) : b.quantity),
+    0
+  );
+  const totalAsks = asks.reduce(
+    (s, a) =>
+      s +
+      (typeof a.quantity === "string" ? parseFloat(a.quantity) : a.quantity),
+    0
+  );
   const buyPct = (totalBids / (totalBids + totalAsks)) * 100 || 0;
 
   interface Level {
-    price: number;
-    quantity: number;
-    total: number;
-    percentage: number;
+    price: number | string;
+    quantity: number | string;
+    total: number | string;
+    percentage: number | string;
+    cumulativeAvgPrice?: number;
+    cumulativeTotalQty?: number;
+    cumulativeTotalValue?: number;
   }
 
   const Row = ({
@@ -64,84 +144,105 @@ export default function OrderBook({
     index: number;
     isHighlighted: boolean;
     isDirectHover: boolean;
-  }) => (
-    <div
-      onMouseEnter={() => {
-        if (isAsk) {
-          setHoveredAskIndex(index);
-          setHoveredBidIndex(null);
-        } else {
-          setHoveredBidIndex(index);
-          setHoveredAskIndex(null);
-        }
-      }}
-      onMouseLeave={() =>
-        isAsk ? setHoveredAskIndex(null) : setHoveredBidIndex(null)
+  }) => {
+    // Sử dụng dữ liệu cumulative từ backend
+    const groupStats = useMemo(() => {
+      if (!isDirectHover || !level.cumulativeAvgPrice) {
+        return { avgPrice: 0, totalQuantity: 0, totalValue: 0 };
       }
-      className={`group px-4 py-0.5 grid grid-cols-3 gap-4 cursor-pointer relative text-xs ${
-        isHighlighted ? "dark:bg-gray-800/50 bg-gray-100/50" : ""
-      } ${
-        isDirectHover
-          ? isAsk
-            ? "border-t border-dashed border-gray-400 dark:border-gray-500"
-            : "border-b border-dashed border-gray-400 dark:border-gray-500"
-          : ""
-      }`}
-    >
-      {/* Background bars for each column */}
+
+      return {
+        avgPrice: level.cumulativeAvgPrice || 0,
+        totalQuantity: level.cumulativeTotalQty || 0,
+        totalValue: level.cumulativeTotalValue || 0,
+      };
+    }, [
+      isDirectHover,
+      level.cumulativeAvgPrice,
+      level.cumulativeTotalQty,
+      level.cumulativeTotalValue,
+    ]);
+
+    return (
       <div
-        className={`absolute inset-y-0 right-0 ${
-          isAsk
-            ? "bg-[#FBE9EB] dark:bg-[#2F1E26]"
-            : "bg-[#EAF8F2] dark:bg-[#1B2A2A]"
+        onMouseEnter={() => {
+          if (isAsk) {
+            setHoveredAskIndex(index);
+            setHoveredBidIndex(null);
+          } else {
+            setHoveredBidIndex(index);
+            setHoveredAskIndex(null);
+          }
+        }}
+        onMouseLeave={() =>
+          isAsk ? setHoveredAskIndex(null) : setHoveredBidIndex(null)
+        }
+        className={`group px-4 py-0.5 grid grid-cols-3 gap-4 cursor-pointer relative text-xs ${
+          isHighlighted ? "dark:bg-gray-800/50 bg-gray-100/50" : ""
+        } ${
+          isDirectHover
+            ? isAsk
+              ? "border-t border-dashed border-gray-400 dark:border-gray-500"
+              : "border-b border-dashed border-gray-400 dark:border-gray-500"
+            : ""
         }`}
-        style={{ width: `${level.percentage}%` }}
-      />
+      >
+        {/* Background bars for each column */}
+        <div
+          className={`absolute inset-y-0 right-0 ${
+            isAsk
+              ? "bg-[#FBE9EB] dark:bg-[#2F1E26]"
+              : "bg-[#EAF8F2] dark:bg-[#1B2A2A]"
+          }`}
+          style={{ width: `${level.percentage}%` }}
+        />
 
-      <span
-        className={`relative z-10 ${
-          isAsk ? "text-red-400" : "text-green-400"
-        } ${isDirectHover ? "font-semibold" : ""}`}
-      >
-        {fmt(level.price)}
-      </span>
-      <span
-        className={`dark:text-white text-black text-right relative z-10 ${
-          isDirectHover ? "font-semibold" : "font-medium"
-        }`}
-      >
-        {level.quantity.toFixed(5)}
-      </span>
-      <span
-        className={`dark:text-white text-black text-right relative z-10 ${
-          isDirectHover ? "font-semibold" : "font-medium"
-        }`}
-      >
-        {level.total.toFixed(2)}
-      </span>
-      <div className="group-hover:block hidden absolute -top-6 -right-[193px] z-2 dark:bg-gray-200 bg-black dark:text-black text-white p-2 rounded shadow-lg border border-gray-300">
-        {/* Mũi tên trỏ vào row */}
-        <div className="absolute left-[-5px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-300 border-black"></div>
-        <div className="absolute left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-200 border-black"></div>
-        <div className="flex gap-2 text-xs">
-          <div>
-            <p>Giá trung bình:</p>
-            <p>Tổng ({data?.base_asset}):</p>
-            <p>Tổng ({data?.quote_asset}):</p>
+        <span
+          className={`relative z-10 ${
+            isAsk ? "text-red-400" : "text-green-400"
+          } ${isDirectHover ? "font-semibold" : ""}`}
+        >
+          {fmt(level.price)}
+        </span>
+        <span
+          className={`dark:text-white text-black text-right relative z-10 ${
+            isDirectHover ? "font-semibold" : "font-medium"
+          }`}
+        >
+          {formatQty(level.quantity, 5)}
+        </span>
+        <span
+          className={`dark:text-white text-black text-right relative z-10 ${
+            isDirectHover ? "font-semibold" : "font-medium"
+          }`}
+        >
+          {formatQty(level.total, 2)}
+        </span>
+        {isDirectHover && (
+          <div className="group-hover:block hidden absolute -top-6 -right-[193px] z-2 dark:bg-gray-200 bg-black dark:text-black text-white p-2 rounded shadow-lg border border-gray-300">
+            {/* Mũi tên trỏ vào row */}
+            <div className="absolute left-[-5px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-300 border-black"></div>
+            <div className="absolute left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] dark:border-r-gray-200 border-black"></div>
+            <div className="flex gap-2 text-xs">
+              <div>
+                <p>Giá trung bình:</p>
+                <p>Tổng ({data?.base_asset}):</p>
+                <p>Tổng ({data?.quote_asset}):</p>
+              </div>
+              <div className="text-right">
+                <p className="flex items-center gap-1">
+                  <PiApproximateEqualsBold />
+                  {fmt(groupStats.avgPrice)}
+                </p>
+                <p>{formatQty(groupStats.totalQuantity, 5)}</p>
+                <p>{formatQty(groupStats.totalValue, 2)}</p>
+              </div>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="flex items-center gap-1">
-              <PiApproximateEqualsBold />
-
-              {fmt(level.price)}
-            </p>
-            <p>{level.quantity.toFixed(5)}</p>
-            <p>{level.total.toFixed(2)}</p>
-          </div>
-        </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="w-[30%] dark:bg-[#181A20] bg-white rounded-[10px] text-white flex flex-col relative overflow-visible">
@@ -196,7 +297,7 @@ export default function OrderBook({
                   : "text-red-400"
               }`}
             >
-              {fmt(Number(trades[0]?.price) || 0)}
+              {fmt(currentPrice)}
               {trades[0]?.takerSide === "BUY" ? (
                 <FaArrowUpLong className="text-green-400 text-sm" />
               ) : (
@@ -205,7 +306,7 @@ export default function OrderBook({
               <span className="text-gray-400 text-xs font-semibold">
                 {" "}
                 {"$"}
-                {fmt(Number(trades[0]?.price) || 0)}
+                {fmt(currentPrice)}
               </span>
             </span>
           </div>
@@ -247,7 +348,6 @@ export default function OrderBook({
           </span>
         </div>
       </div>
-      <ConnectionStatus connected={connected} />
     </div>
   );
 }

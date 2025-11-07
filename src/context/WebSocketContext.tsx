@@ -1,0 +1,185 @@
+"use client";
+
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  ReactNode,
+} from "react";
+import { useListenKey } from "@/hooks/useListenKey";
+
+interface WebSocketMessage {
+  channel: string;
+  action: string;
+  data?: unknown;
+  [key: string]: unknown;
+}
+
+interface ChannelSubscription {
+  channel: string;
+  params: Record<string, unknown>;
+  onMessage: (data: WebSocketMessage) => void;
+}
+
+interface WebSocketContextValue {
+  subscribe: (
+    channel: string,
+    params: Record<string, unknown>,
+    onMessage: (data: WebSocketMessage) => void
+  ) => () => void;
+  send: (data: Record<string, unknown>) => void;
+}
+
+const WebSocketContext = createContext<WebSocketContextValue | null>(null);
+
+interface WebSocketProviderProps {
+  children: ReactNode;
+  url?: string;
+}
+
+export function WebSocketProvider({
+  children,
+  url = "ws://localhost:3000/ws",
+}: WebSocketProviderProps) {
+  const { listenKey, listenKeyFetched } = useListenKey();
+  const wsRef = useRef<WebSocket | null>(null);
+  const subscriptionsRef = useRef<Map<string, ChannelSubscription>>(new Map());
+
+  const send = useCallback((data: Record<string, unknown>) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(data));
+    }
+  }, []);
+
+  const subscribe = useCallback(
+    (
+      channel: string,
+      params: Record<string, unknown>,
+      onMessage: (data: WebSocketMessage) => void
+    ) => {
+      const key = `${channel}:${JSON.stringify(params)}`;
+      subscriptionsRef.current.set(key, { channel, params, onMessage });
+
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        send({ action: "subscribe", channel, params });
+      }
+
+      return () => {
+        subscriptionsRef.current.delete(key);
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          send({ action: "unsubscribe", channel });
+        }
+      };
+    },
+    [send]
+  );
+
+  const handleMessage = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const message: WebSocketMessage = JSON.parse(event.data);
+
+        if (message.action === "connected") {
+          for (const [, sub] of subscriptionsRef.current) {
+            send({
+              action: "subscribe",
+              channel: sub.channel,
+              params: sub.params,
+            });
+          }
+          return;
+        }
+
+        if (!message.channel) return;
+
+        for (const [, sub] of subscriptionsRef.current) {
+          if (sub.channel !== message.channel) continue;
+
+          const paramsMatch = Object.keys(sub.params).every((paramKey) => {
+            const subValue = sub.params[paramKey];
+            const msgValue = message[paramKey];
+            if (subValue === undefined || subValue === null) return true;
+            if (subValue === msgValue) return true;
+            if (
+              typeof message.data === "object" &&
+              message.data !== null &&
+              paramKey in message.data
+            )
+              return true;
+            return msgValue === undefined;
+          });
+
+          if (paramsMatch) {
+            sub.onMessage(message);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error("[WS] Error:", error);
+      }
+    },
+    [send]
+  );
+
+  useEffect(() => {
+    // Chỉ kết nối sau khi đã fetch listenKey (nếu có accessToken)
+    if (!listenKeyFetched) return;
+
+    // Close existing connection if listenKey changed
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    const connect = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+      const wsUrl = listenKey ? `${url}?listenKey=${listenKey}` : url;
+      console.log("[WS] WebSocket URL:", wsUrl);
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        for (const [, sub] of subscriptionsRef.current) {
+          send({
+            action: "subscribe",
+            channel: sub.channel,
+            params: sub.params,
+          });
+        }
+      };
+
+      ws.onmessage = handleMessage;
+      ws.onclose = () => {
+        wsRef.current = null;
+        setTimeout(connect, 3000);
+      };
+    };
+
+    connect();
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [url, listenKey, listenKeyFetched, handleMessage, send]);
+
+  return (
+    <WebSocketContext.Provider value={{ subscribe, send }}>
+      {children}
+    </WebSocketContext.Provider>
+  );
+}
+
+export function useWebSocketContext() {
+  const context = useContext(WebSocketContext);
+  if (!context) {
+    throw new Error(
+      "useWebSocketContext must be used within WebSocketProvider"
+    );
+  }
+  return context;
+}

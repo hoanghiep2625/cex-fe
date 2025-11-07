@@ -2,10 +2,11 @@
 
 import TabUnderline from "@/components/ui/TabUnderline";
 import { useRef, useState, useEffect, useMemo } from "react";
-import CandlestickChart from "@/components/chart/CandlestickChart";
-import { useCandles } from "@/hooks/useCandles";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import CandlestickChart, { Candle } from "@/components/chart/CandlestickChart";
+import { useCandles } from "@/hooks";
 import { Bars } from "react-loader-spinner";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axiosInstance";
 
 interface TradingViewWindow extends Window {
   TradingView?: {
@@ -13,7 +14,13 @@ interface TradingViewWindow extends Window {
   };
 }
 
-export default function ChartPanel({ pair }: { pair: string }) {
+export default function ChartPanel({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"chart" | "info" | "trades">(
     "chart"
@@ -38,12 +45,48 @@ export default function ChartPanel({ pair }: { pair: string }) {
     return map[timeframe] || "1d";
   }, [timeframe]);
 
-  // Fetch candles data via WebSocket
-  const { candles, loading, connected } = useCandles({
-    symbol: pair,
-    interval,
-    enabled: chartType === "goc",
+  const symbolCode = pair.replace("_", "");
+
+  // Fetch initial candles data from REST API
+  const { data: initialCandles, isLoading: candlesLoading } = useQuery<
+    Candle[]
+  >({
+    queryKey: ["candles", symbolCode, interval, type],
+    queryFn: () =>
+      axiosInstance
+        .get("/candles", {
+          params: {
+            symbol: symbolCode,
+            interval,
+            type,
+            limit: 500,
+          },
+        })
+        .then((r) => {
+          const data = r.data?.data || [];
+          return data.map((candle: any) => ({
+            open_time: candle.open_time,
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close,
+            volume: candle.volume,
+          }));
+        }),
+    refetchOnWindowFocus: false,
   });
+
+  // Subscribe to WebSocket updates
+  const { candles: wsCandles } = useCandles(symbolCode, interval, type, 500);
+
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  const typedCandles = useMemo(() => {
+    const ws = wsCandles as Candle[] | null;
+    if (ws && ws.length > 0) return ws;
+    return initialCandles || [];
+  }, [wsCandles, initialCandles]);
+
+  const loading = candlesLoading && !typedCandles.length;
 
   // Detect dark mode
   useEffect(() => {
@@ -264,7 +307,7 @@ export default function ChartPanel({ pair }: { pair: string }) {
                     />
                   </div>
                 ) : (
-                  <CandlestickChart candles={candles} isDark={isDark} />
+                  <CandlestickChart candles={typedCandles} isDark={isDark} />
                 )}
               </div>
             )}
@@ -293,7 +336,6 @@ export default function ChartPanel({ pair }: { pair: string }) {
           Trades content
         </div>
       )}
-      <ConnectionStatus connected={connected} />
     </div>
   );
 }

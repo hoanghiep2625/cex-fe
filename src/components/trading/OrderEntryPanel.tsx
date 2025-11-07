@@ -1,17 +1,26 @@
 "use client";
 
+interface BalanceData {
+  [currency: string]: {
+    available: string;
+    locked: string;
+    total: string;
+  };
+}
+
 import { useAuth } from "@/hooks/useAuth";
-import { useBalance } from "@/hooks/useBalance";
 import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
 import { LuCircleAlert, LuPlus } from "react-icons/lu";
 import { IoMdArrowDropdown } from "react-icons/io";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
+import { useBalance, useMarketData } from "@/hooks/useWebSocket";
+import { useQuery } from "@tanstack/react-query";
+
 export default function OrderEntryPanel({
   pair,
   type,
@@ -22,17 +31,67 @@ export default function OrderEntryPanel({
   const [orderType, setOrderType] = useState<"limit" | "market" | "stop">(
     "limit"
   );
-  const { loading, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { symbol } = useSymbol();
 
   const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
 
-  const {
-    balances,
-    loading: balanceLoading,
-    error: balanceError,
-    connected,
-  } = useBalance(pair.replace("_", ""), type);
+  const walletType =
+    type === "spot" ? "spot" : type === "futures" ? "future" : "funding";
+
+  const symbolCode = pair.replace("_", "");
+
+  // Fetch initial balance data from REST API
+  const { data: initialBalances, isLoading: balanceLoading } =
+    useQuery<BalanceData>({
+      queryKey: ["balance", symbolCode, walletType],
+      queryFn: () =>
+        axiosInstance
+          .get(`/balance/symbol/${symbolCode}`, {
+            params: { wallet_type: walletType },
+          })
+          .then((r) => r.data?.data || {}),
+      refetchOnWindowFocus: false,
+      enabled: isAuthenticated, // Only fetch if authenticated
+    });
+
+  // Subscribe to WebSocket updates
+  const { balances: wsBalances } = useBalance(symbolCode, walletType);
+  const { marketData: wsMarketData } = useMarketData(symbolCode, type);
+
+  // Fetch initial market data from REST API
+  const { data: initialMarketData } = useQuery({
+    queryKey: ["marketData", symbolCode, type],
+    queryFn: () =>
+      axiosInstance
+        .get(`/symbols/market-data/${symbolCode}`, {
+          params: { type },
+        })
+        .then((r) => r.data?.data || {}),
+    refetchOnWindowFocus: false,
+  });
+
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  const balances = useMemo(() => {
+    const ws = wsBalances as BalanceData | null;
+    if (ws && Object.keys(ws).length > 0) return ws;
+    if (initialBalances && Object.keys(initialBalances).length > 0)
+      return initialBalances;
+    return null;
+  }, [wsBalances, initialBalances]);
+
+  // Get current price from market data
+  const marketData = useMemo(() => {
+    return (
+      (wsMarketData as { price?: number; currentPrice?: number } | null) ||
+      (initialMarketData as { price?: number; currentPrice?: number } | null) ||
+      null
+    );
+  }, [wsMarketData, initialMarketData]);
+
+  const currentPrice = marketData?.currentPrice || marketData?.price || 0;
+
+  const loading = balanceLoading;
 
   const [activeTab, setActiveTab] = useState("spot");
   const [buyPrice, setBuyPrice] = useState("");
@@ -254,7 +313,7 @@ export default function OrderEntryPanel({
                 </span>
                 <div className="flex items-center gap-1">
                   <span>
-                    {balanceLoading ? "-" : quoteAssetBalance} {quoteCurrency}
+                    {loading ? "-" : quoteAssetBalance} {quoteCurrency}
                   </span>
                   <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
                     <LuPlus
@@ -270,9 +329,11 @@ export default function OrderEntryPanel({
                   Mua tối đa
                 </span>
                 <span>
-                  {balanceLoading
+                  {loading || !currentPrice
                     ? "--"
-                    : (parseFloat(quoteAssetBalance) / 100000).toFixed(8)}{" "}
+                    : (parseFloat(quoteAssetBalance) / currentPrice).toFixed(
+                        8
+                      )}{" "}
                   {baseCurrency}
                 </span>
               </div>
@@ -336,7 +397,7 @@ export default function OrderEntryPanel({
                   Khả dụng
                 </span>
                 <span>
-                  {balanceLoading ? "-" : baseAssetBalance} {baseCurrency}
+                  {loading ? "-" : baseAssetBalance} {baseCurrency}
                 </span>
               </div>
               <div className="flex justify-between dark:text-white text-black">
@@ -344,9 +405,11 @@ export default function OrderEntryPanel({
                   Bán tối đa
                 </span>
                 <span>
-                  {balanceLoading
+                  {loading || !currentPrice
                     ? "--"
-                    : (parseFloat(baseAssetBalance) * 100000).toFixed(8)}{" "}
+                    : (parseFloat(baseAssetBalance) * currentPrice).toFixed(
+                        8
+                      )}{" "}
                   {quoteCurrency}
                 </span>
               </div>
@@ -371,7 +434,6 @@ export default function OrderEntryPanel({
             )}
           </div>
         </div>
-        <ConnectionStatus connected={connected} />
       </div>
     </>
   );

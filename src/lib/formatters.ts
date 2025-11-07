@@ -1,5 +1,9 @@
-export const fmt = (n: number) => {
-  const [integer, decimal] = n.toFixed(2).split(".");
+export const fmt = (n: number | string) => {
+  const num = typeof n === "string" ? parseFloat(n) : n;
+  if (isNaN(num) || num === null || num === undefined) {
+    return "0,00";
+  }
+  const [integer, decimal] = num.toFixed(2).split(".");
   const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   return `${formattedInteger},${decimal}`;
 };
@@ -9,6 +13,9 @@ export const formatPrice = (
   decimals: number = 2
 ): string => {
   const num = typeof price === "string" ? parseFloat(price) : price;
+  if (isNaN(num) || num === null || num === undefined) {
+    return "0";
+  }
   return num.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -20,6 +27,9 @@ export const formatQty = (
   decimals: number = 8
 ): string => {
   const num = typeof qty === "string" ? parseFloat(qty) : qty;
+  if (isNaN(num) || num === null || num === undefined) {
+    return "0";
+  }
   return num.toLocaleString("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,

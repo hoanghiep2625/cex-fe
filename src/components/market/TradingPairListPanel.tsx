@@ -1,30 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { LuChevronRight, LuSearch, LuStar } from "react-icons/lu";
 import { TiArrowUnsorted } from "react-icons/ti";
-import { useTicker } from "@/hooks/useTicker";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { fmt } from "@/lib/formatters";
+import { useTicker } from "@/hooks";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axiosInstance";
 
-export default function TradingPairListPanel() {
+interface TickerData {
+  base_asset: string;
+  quote_asset: string;
+  price: number;
+  priceChangePercent24h: number;
+}
+
+export default function TradingPairListPanel({
+  pair,
+  type,
+}: {
+  pair: string;
+  type: string;
+}) {
   const [activeTab, setActiveTab] = useState("USDT");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { tickers, connected } = useTicker({
-    quoteAsset: activeTab,
-    type: "spot",
+  // Fetch initial tickers data from REST API (filter by quote_asset)
+  const { data: initialTickers } = useQuery<TickerData[]>({
+    queryKey: ["tickers", activeTab, type],
+    queryFn: () =>
+      axiosInstance
+        .get("/symbols/tickers", {
+          params: {
+            quote_asset: activeTab,
+            type,
+            status: "TRADING",
+          },
+        })
+        .then((r) => r.data?.data?.data || r.data?.data || []),
+    refetchOnWindowFocus: false,
+    enabled: activeTab !== "Mới", // Skip API call for "Mới" tab
   });
 
-  const tradingPairs = tickers?.map((sym) => ({
-    name: `${sym.base_asset}/${sym.quote_asset}`,
-    leverage: "5x",
-    price: sym.price || 0,
-    change: sym.priceChangePercent24h || 0,
-  }));
+  // Subscribe to WebSocket updates
+  const { tickers: wsTickers } = useTicker(activeTab, type);
 
-  const filteredPairs = tradingPairs?.filter((p) =>
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  const tickers = useMemo(() => {
+    const ws = wsTickers as TickerData[] | null;
+    if (Array.isArray(ws) && ws.length > 0) return ws;
+    if (Array.isArray(initialTickers)) return initialTickers;
+    return [];
+  }, [wsTickers, initialTickers]);
+
+  const tradingPairs = Array.isArray(tickers)
+    ? tickers.map((sym) => ({
+        name: `${sym.base_asset}/${sym.quote_asset}`,
+        leverage: "5x",
+        price: sym.price || 0,
+        change: sym.priceChangePercent24h || 0,
+      }))
+    : [];
+
+  const filteredPairs = tradingPairs.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -136,7 +175,6 @@ export default function TradingPairListPanel() {
           ))}
         </div>
       </div>
-      <ConnectionStatus connected={connected} />
     </div>
   );
 }

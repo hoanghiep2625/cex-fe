@@ -1,35 +1,105 @@
 "use client";
 
-import { useState } from "react";
+interface Order {
+  id: string;
+  symbol: string;
+  side: "BUY" | "SELL";
+  price: string | number;
+  quantity: string | number;
+  filled: string | number;
+  qty: string | number;
+  filled_qty: string | number;
+  remaining_qty: string | number;
+  status: string;
+  created_at: string;
+  type?: string;
+}
+
+import { useState, useMemo } from "react";
 import CustomCheckbox from "@/components/ui/CustomCheckbox";
 import TabUnderline from "@/components/ui/TabUnderline";
 import { useAuth } from "@/hooks/useAuth";
-import { usePendingOrders } from "@/hooks/usePendingOrders";
 import Link from "next/link";
 import axiosInstance from "@/lib/axiosInstance";
 import toast from "react-hot-toast";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import DateFilters from "@/components/layouts/DateFilters";
+import { usePendingOrders } from "@/hooks/useWebSocket";
 
 export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   const [hideOtherPairs, setHideOtherPairs] = useState(false);
   const [activeTab, setActiveTab] = useState("orders");
-  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
-  const { orders, connected } = usePendingOrders(
-    hideOtherPairs ? pair : undefined,
-    hideOtherPairs
-  );
+  const [optimisticallyRemovedOrders, setOptimisticallyRemovedOrders] =
+    useState<Set<string>>(new Set());
+
+  const symbolCode = hideOtherPairs ? pair.replace("_", "") : undefined;
+  const queryClient = useQueryClient();
+
+  // Fetch initial pending orders from REST API
+  const { data: initialOrders, isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ["pendingOrders", symbolCode],
+    queryFn: () =>
+      axiosInstance
+        .get("/orders/pending", {
+          params: symbolCode ? { symbol: symbolCode } : {},
+        })
+        .then((r) => r.data?.data || []),
+    refetchOnWindowFocus: false,
+    enabled: isAuthenticated, // Only fetch if authenticated
+  });
+
+  // Subscribe to WebSocket updates
+  const { orders: wsOrders } = usePendingOrders(symbolCode);
+
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  // Filter out optimistically removed orders
+  const orders = useMemo(() => {
+    const ws = wsOrders as Order[] | null;
+    const source =
+      Array.isArray(ws) && ws.length > 0
+        ? ws
+        : Array.isArray(initialOrders)
+        ? initialOrders
+        : [];
+    // Remove orders that were optimistically removed
+    return source.filter((order) => !optimisticallyRemovedOrders.has(order.id));
+  }, [wsOrders, initialOrders, optimisticallyRemovedOrders]);
+
+  // Filter orders to only show pending ones (NEW or PARTIALLY_FILLED)
+  const pendingOrders = useMemo(() => {
+    return orders.filter(
+      (order) => order.status === "NEW" || order.status === "PARTIALLY_FILLED"
+    );
+  }, [orders]);
+
   const cancelOrder = useMutation({
     mutationFn: (orderId: string) =>
       axiosInstance.put(`/orders/${orderId}/cancel`),
 
-    onSuccess: () => {
-      toast.success("Huỷ lệnh thành công");
+    onMutate: async (orderId) => {
+      setOptimisticallyRemovedOrders((prev) => new Set(prev).add(orderId));
+      return { orderId };
     },
 
-    onError: () => {
+    onSuccess: (data, orderId) => {
+      toast.success("Huỷ lệnh thành công");
+      setTimeout(() => {
+        setOptimisticallyRemovedOrders((prev) => {
+          const next = new Set(prev);
+          next.delete(orderId);
+          return next;
+        });
+      }, 1000);
+    },
+
+    onError: (error, orderId) => {
+      // Rollback optimistic update nếu có lỗi
+      setOptimisticallyRemovedOrders((prev) => {
+        const next = new Set(prev);
+        next.delete(orderId);
+        return next;
+      });
       toast.error("Huỷ lệnh thất bại");
     },
   });
@@ -123,7 +193,11 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                 </Link>{" "}
                 để giao dịch.
               </div>
-            ) : orders.length === 0 ? (
+            ) : ordersLoading ? (
+              <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
+                Đang tải...
+              </div>
+            ) : pendingOrders.length === 0 ? (
               <div className="text-center text-gray-500 mt-10 text-xs font-semibold">
                 Không có lệnh đang chờ khớp
               </div>
@@ -165,7 +239,7 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order) => (
+                    {pendingOrders.map((order) => (
                       <tr
                         key={order.id}
                         className="dark:border-b dark:border-gray-700 border-b border-gray-100 hover:dark:bg-gray-900 hover:bg-gray-50"
@@ -231,7 +305,7 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                   </tbody>
                 </table>
                 <div className="text-xs text-gray-500 mt-4 px-2 my-6">
-                  Tổng: {orders.length} lệnh đang chờ
+                  Tổng: {pendingOrders.length} lệnh đang chờ
                 </div>
               </div>
             )}
@@ -360,7 +434,6 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
           </div>
         )}
       </div>
-      <ConnectionStatus connected={connected} />
     </div>
   );
 }

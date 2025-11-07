@@ -54,13 +54,11 @@ export default function LoginPage() {
         password,
       });
 
-      // axiosInstance trả về axios response object (không unwrap)
-      // response.data = { statusCode, message, data: { accessToken, user, ... } }
       const accessToken = response.data?.data?.accessToken;
 
-      // Save token to localStorage
       if (accessToken) {
         localStorage.setItem("accessToken", accessToken);
+        window.dispatchEvent(new Event("user-login"));
         toast.success("Đăng nhập thành công!");
         console.log("✅ Token saved successfully");
         // Redirect to home page

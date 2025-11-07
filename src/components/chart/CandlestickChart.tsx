@@ -13,7 +13,15 @@ import type {
   CandlestickData,
   HistogramData,
 } from "lightweight-charts";
-import { Candle } from "@/hooks/useCandles";
+
+export interface Candle {
+  open_time: number;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
+}
 
 interface CandlestickChartProps {
   candles: Candle[];
@@ -28,7 +36,7 @@ export default function CandlestickChart({
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
-  const hasInitialFit = useRef(false); // Track if we've done initial fitContent
+  const hasInitialFit = useRef(false);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -57,7 +65,6 @@ export default function CandlestickChart({
       },
     });
 
-    // Add candlestick series (v5 API - theo docs example)
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: "#2dbd86",
       downColor: "#f5475e",
@@ -66,11 +73,10 @@ export default function CandlestickChart({
       wickDownColor: "#f5475e",
     });
 
-    // Set price scale for candlestick - takes top 70%
     candlestickSeries.priceScale().applyOptions({
       scaleMargins: {
         top: 0.05,
-        bottom: 0.2, // Leave space for volume
+        bottom: 0.2,
       },
     });
 
@@ -79,12 +85,11 @@ export default function CandlestickChart({
       priceFormat: {
         type: "volume",
       },
-      priceScaleId: "volume", // Create separate scale for volume with ID
+      priceScaleId: "volume",
       lastValueVisible: false,
       priceLineVisible: false,
     });
 
-    // Configure volume price scale on right side
     chart.priceScale("volume").applyOptions({
       scaleMargins: {
         top: 0.8,
@@ -95,7 +100,7 @@ export default function CandlestickChart({
     chartRef.current = chart;
     candlestickSeriesRef.current = candlestickSeries;
     volumeSeriesRef.current = volumeSeries;
-    hasInitialFit.current = false; // Reset fit flag when chart is recreated
+    hasInitialFit.current = false;
 
     // Handle resize
     const handleResize = () => {

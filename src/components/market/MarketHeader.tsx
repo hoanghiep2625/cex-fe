@@ -2,9 +2,7 @@
 
 import { useRef, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { useMarketData } from "@/hooks/useMarketData";
 import { CiStar } from "react-icons/ci";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { MdOutlineArrowOutward } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +10,19 @@ import axiosInstance from "@/lib/axiosInstance";
 import { fmt } from "@/lib/formatters";
 import Link from "next/link";
 import { Symbol } from "@/types";
+import { useMarketData } from "@/hooks";
+
+interface MarketData {
+  name: string;
+  price: number;
+  priceChange24h: number;
+  priceChangePercent24h: number;
+  highPrice24h: number;
+  lowPrice24h: number;
+  volume24h: number;
+  quoteAssetVolume24h?: number;
+  [key: string]: unknown;
+}
 
 export default function MarketHeader({
   pair,
@@ -24,13 +35,22 @@ export default function MarketHeader({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [imageError, setImageError] = useState(false);
-
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
-  const {
-    marketData,
-    connected,
-    loading: marketDataLoading,
-  } = useMarketData(symbol, type);
+
+  const { data: initialMarketData, isLoading: marketDataLoading } =
+    useQuery<MarketData>({
+      queryKey: ["marketData", symbol, type],
+      queryFn: () =>
+        axiosInstance
+          .get(`/symbols/market-data/${symbol}`, { params: { type } })
+          .then((r) => r.data?.data),
+      refetchOnWindowFocus: false,
+    });
+  const { marketData: wsMarketData } = useMarketData(symbol, type);
+  const marketData = useMemo(() => {
+    return (wsMarketData as MarketData | null) || initialMarketData || null;
+  }, [wsMarketData, initialMarketData]);
+
   const { data, isLoading: symbolInfoLoading } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol],
     queryFn: () =>
@@ -277,7 +297,6 @@ export default function MarketHeader({
           </div>
         </>
       )}
-      <ConnectionStatus connected={connected} />
     </div>
   );
 }

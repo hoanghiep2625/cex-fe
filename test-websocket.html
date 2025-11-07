@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Test</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #1a1a1a;
+        color: #e0e0e0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #4caf50;
+        margin-bottom: 20px;
+      }
+      .section {
+        background: #2a2a2a;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .section h2 {
+        color: #64b5f6;
+        margin-bottom: 15px;
+        font-size: 18px;
+      }
+      .input-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #b0b0b0;
+        font-size: 14px;
+      }
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        background: #333;
+        color: #e0e0e0;
+        font-size: 14px;
+      }
+      button {
+        background: #4caf50;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+      button:hover {
+        background: #45a049;
+      }
+      button.danger {
+        background: #f44336;
+      }
+      button.danger:hover {
+        background: #da190b;
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+      .status.connected {
+        background: #4caf50;
+        color: white;
+      }
+      .status.disconnected {
+        background: #f44336;
+        color: white;
+      }
+      .status.connecting {
+        background: #ff9800;
+        color: white;
+      }
+      .messages {
+        background: #1a1a1a;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 15px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+      }
+      .message {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-left: 3px solid #4caf50;
+        background: #2a2a2a;
+      }
+      .message.error {
+        border-left-color: #f44336;
+      }
+      .message.subscribed {
+        border-left-color: #2196f3;
+      }
+      .subscriptions {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .subscription-card {
+        background: #333;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #444;
+      }
+      .subscription-card h3 {
+        color: #64b5f6;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+      .subscription-card .params {
+        font-size: 11px;
+        color: #b0b0b0;
+        margin-bottom: 5px;
+      }
+      .subscription-card button {
+        margin-top: 5px;
+        padding: 5px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔌 WebSocket Test Client</h1>
+
+      <!-- Connection Section -->
+      <div class="section">
+        <h2>Connection</h2>
+        <div class="input-group">
+          <label>WebSocket URL:</label>
+          <input
+            type="text"
+            id="wsUrl"
+            value="ws://localhost:3000/ws"
+            placeholder="ws://localhost:3000/ws"
+          />
+        </div>
+        <div class="input-group">
+          <label>ListenKey (optional, for authenticated channels):</label>
+          <input
+            type="text"
+            id="listenKey"
+            placeholder="Enter listenKey for authenticated channels"
+          />
+        </div>
+        <div id="status" class="status disconnected">Disconnected</div>
+        <button id="connectBtn" onclick="connect()">Connect</button>
+        <button
+          id="disconnectBtn"
+          class="danger"
+          onclick="disconnect()"
+          disabled
+        >
+          Disconnect
+        </button>
+      </div>
+
+      <!-- Subscribe Section -->
+      <div class="section">
+        <h2>Subscribe to Channel</h2>
+        <div class="input-group">
+          <label>Channel:</label>
+          <select id="channel">
+            <option value="orderbook">OrderBook</option>
+            <option value="recenttrades">Recent Trades</option>
+            <option value="marketdata">Market Data</option>
+            <option value="candles">Candles</option>
+            <option value="ticker">Ticker</option>
+            <option value="globalticker">Global Ticker</option>
+            <option value="balance">Balance (requires auth)</option>
+            <option value="orders">Orders (requires auth)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Symbol:</label>
+          <input
+            type="text"
+            id="symbol"
+            value="BTCUSDT"
+            placeholder="BTCUSDT"
+          />
+        </div>
+        <div class="input-group">
+          <label>Type:</label>
+          <select id="type">
+            <option value="spot">Spot</option>
+            <option value="future">Future</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Interval (for candles):</label>
+          <select id="interval">
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+            <option value="1d">1d</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Quote Asset (for ticker):</label>
+          <input type="text" id="quoteAsset" value="USDT" placeholder="USDT" />
+        </div>
+        <div class="input-group">
+          <label>Wallet Type (for balance):</label>
+          <select id="walletType">
+            <option value="spot">Spot</option>
+            <option value="future">Future</option>
+            <option value="funding">Funding</option>
+          </select>
+        </div>
+        <button onclick="subscribe()">Subscribe</button>
+      </div>
+
+      <!-- Subscriptions List -->
+      <div class="section">
+        <h2>Active Subscriptions</h2>
+        <div id="subscriptions" class="subscriptions"></div>
+      </div>
+
+      <!-- Messages Section -->
+      <div class="section">
+        <h2>Messages</h2>
+        <button onclick="clearMessages()" class="danger">Clear Messages</button>
+        <div id="messages" class="messages"></div>
+      </div>
+    </div>
+
+    <script>
+      let ws = null;
+      let subscriptions = new Map();
+      let messageCount = 0;
+
+      function updateStatus(status, text) {
+        const statusEl = document.getElementById("status");
+        statusEl.className = `status ${status}`;
+        statusEl.textContent = text;
+      }
+
+      function addMessage(message, type = "info") {
+        const messagesEl = document.getElementById("messages");
+        const messageEl = document.createElement("div");
+        messageEl.className = `message ${type}`;
+        messageEl.innerHTML = `
+                <strong>[${new Date().toLocaleTimeString()}]</strong> 
+                <pre>${JSON.stringify(message, null, 2)}</pre>
+            `;
+        messagesEl.insertBefore(messageEl, messagesEl.firstChild);
+        messageCount++;
+        if (messageCount > 100) {
+          messagesEl.removeChild(messagesEl.lastChild);
+          messageCount--;
+        }
+      }
+
+      function clearMessages() {
+        document.getElementById("messages").innerHTML = "";
+        messageCount = 0;
+      }
+
+      function updateSubscriptions() {
+        const subscriptionsEl = document.getElementById("subscriptions");
+        subscriptionsEl.innerHTML = "";
+
+        subscriptions.forEach((params, key) => {
+          const [channel] = key.split(":");
+          const card = document.createElement("div");
+          card.className = "subscription-card";
+          card.innerHTML = `
+                    <h3>${channel}</h3>
+                    <div class="params">${JSON.stringify(params)}</div>
+                    <button onclick="unsubscribe('${channel}')" class="danger">Unsubscribe</button>
+                `;
+          subscriptionsEl.appendChild(card);
+        });
+      }
+
+      function connect() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          addMessage({ error: "Already connected" }, "error");
+          return;
+        }
+
+        const url = document.getElementById("wsUrl").value;
+        const listenKey = document.getElementById("listenKey").value.trim();
+        const wsUrl = listenKey ? `${url}?listenKey=${listenKey}` : url;
+
+        updateStatus("connecting", "Connecting...");
+        addMessage({ action: "connecting", url: wsUrl });
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          updateStatus("connected", "Connected");
+          document.getElementById("connectBtn").disabled = true;
+          document.getElementById("disconnectBtn").disabled = false;
+          addMessage(
+            { action: "connected", timestamp: new Date().toISOString() },
+            "subscribed"
+          );
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            addMessage(
+              message,
+              message.error
+                ? "error"
+                : message.action === "subscribed"
+                ? "subscribed"
+                : "info"
+            );
+          } catch (e) {
+            addMessage({ error: "Invalid JSON", data: event.data }, "error");
+          }
+        };
+
+        ws.onerror = (error) => {
+          addMessage({ error: "WebSocket error", details: error }, "error");
+        };
+
+        ws.onclose = () => {
+          updateStatus("disconnected", "Disconnected");
+          document.getElementById("connectBtn").disabled = false;
+          document.getElementById("disconnectBtn").disabled = true;
+          addMessage(
+            { action: "disconnected", timestamp: new Date().toISOString() },
+            "error"
+          );
+        };
+      }
+
+      function disconnect() {
+        if (ws) {
+          ws.close();
+          ws = null;
+          subscriptions.clear();
+          updateSubscriptions();
+        }
+      }
+
+      function subscribe() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          addMessage({ error: "Not connected" }, "error");
+          return;
+        }
+
+        const channel = document.getElementById("channel").value;
+        const params = {};
+
+        // Build params based on channel
+        if (
+          channel === "orderbook" ||
+          channel === "marketdata" ||
+          channel === "recenttrades"
+        ) {
+          params.symbol = document.getElementById("symbol").value;
+          params.type = document.getElementById("type").value;
+        } else if (channel === "candles") {
+          params.symbol = document.getElementById("symbol").value;
+          params.interval = document.getElementById("interval").value;
+          params.type = document.getElementById("type").value;
+          params.limit = 500;
+        } else if (channel === "ticker") {
+          params.quote_asset = document.getElementById("quoteAsset").value;
+          params.type = document.getElementById("type").value;
+        } else if (channel === "globalticker") {
+          params.type = document.getElementById("type").value;
+        } else if (channel === "balance") {
+          params.symbol = document.getElementById("symbol").value;
+          params.wallet_type = document.getElementById("walletType").value;
+        } else if (channel === "orders") {
+          const symbol = document.getElementById("symbol").value;
+          if (symbol) params.symbol = symbol;
+        }
+
+        const key = `${channel}:${JSON.stringify(params)}`;
+        subscriptions.set(key, params);
+
+        const message = {
+          action: "subscribe",
+          channel,
+          params,
+        };
+
+        ws.send(JSON.stringify(message));
+        addMessage(message, "subscribed");
+        updateSubscriptions();
+      }
+
+      function unsubscribe(channel) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          addMessage({ error: "Not connected" }, "error");
+          return;
+        }
+
+        // Remove all subscriptions for this channel
+        const keysToRemove = [];
+        subscriptions.forEach((params, key) => {
+          if (key.startsWith(channel + ":")) {
+            keysToRemove.push(key);
+          }
+        });
+
+        keysToRemove.forEach((key) => subscriptions.delete(key));
+
+        const message = {
+          action: "unsubscribe",
+          channel,
+        };
+
+        ws.send(JSON.stringify(message));
+        addMessage(message, "subscribed");
+        updateSubscriptions();
+      }
+
+      // Auto-connect on load if URL is set
+      window.addEventListener("load", () => {
+        // Optional: Auto-connect
+        // connect();
+      });
+    </script>
+  </body>
+</html>

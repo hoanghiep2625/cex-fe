@@ -1,16 +1,45 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRecentTrades } from "@/hooks/useRecentTrades";
 import TabUnderline from "@/components/ui/TabUnderline";
-import ConnectionStatus from "@/components/ui/ConnectionStatus";
 import { fmt, formatTime } from "@/lib/formatters";
+import { useRecentTrades } from "@/hooks";
+import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axiosInstance";
+
+interface Trade {
+  id: string;
+  price: string;
+  quantity: string;
+  time: number;
+  takerSide: "BUY" | "SELL";
+}
 
 export default function RecentTrades({ pair }: { pair: string }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
 
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
-  const { trades, connected } = useRecentTrades(symbol);
+
+  // Fetch initial recent trades data from REST API
+  const { data: initialTrades } = useQuery<Trade[]>({
+    queryKey: ["recentTrades", symbol],
+    queryFn: () =>
+      axiosInstance
+        .get(`/trades/recent/${symbol}`, { params: { limit: 50 } })
+        .then((r) => r.data?.data || []),
+    refetchOnWindowFocus: false,
+  });
+
+  // Subscribe to WebSocket updates
+  const { trades: wsTrades } = useRecentTrades(symbol);
+
+  // Use WebSocket update if available, otherwise use initial data from REST API
+  const trades = useMemo(() => {
+    const ws = wsTrades as Trade[] | null;
+    if (Array.isArray(ws) && ws.length > 0) return ws;
+    if (Array.isArray(initialTrades)) return initialTrades;
+    return [];
+  }, [wsTrades, initialTrades]);
 
   const formatQuantity = (quantity: string | number) => {
     const num = typeof quantity === "string" ? parseFloat(quantity) : quantity;
@@ -38,8 +67,6 @@ export default function RecentTrades({ pair }: { pair: string }) {
         <button className="ml-auto dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800 text-lg">
           ⋯
         </button>
-        {/* Connection Status */}
-        <ConnectionStatus connected={connected} />
       </div>
 
       {/* Table Content */}
