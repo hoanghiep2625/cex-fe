@@ -14,6 +14,7 @@ interface WebSocketMessage {
   channel: string;
   action: string;
   data?: unknown;
+  error?: string | unknown;
   [key: string]: unknown;
 }
 
@@ -81,9 +82,8 @@ export function WebSocketProvider({
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
 
-        // ✅ Xử lý error về listenKey hết hạn
-        if (message.error || (message as any).error) {
-          const errorMsg = message.error || (message as any).error;
+        if (message.error) {
+          const errorMsg = message.error;
           if (
             typeof errorMsg === "string" &&
             (errorMsg.includes("hết hạn") ||
@@ -139,7 +139,7 @@ export function WebSocketProvider({
         console.error("[WS] Error:", error);
       }
     },
-    [send]
+    [send, fetchListenKey]
   );
 
   useEffect(() => {
