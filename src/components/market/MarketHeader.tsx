@@ -10,9 +10,8 @@ import axiosInstance from "@/lib/axiosInstance";
 import { fmt } from "@/lib/formatters";
 import Link from "next/link";
 import { Symbol } from "@/types";
-import { useMarketData } from "@/hooks";
 
-interface MarketData {
+export interface MarketData {
   name: string;
   price: number;
   priceChange24h: number;
@@ -20,16 +19,16 @@ interface MarketData {
   highPrice24h: number;
   lowPrice24h: number;
   volume24h: number;
-  quoteAssetVolume24h?: number;
-  [key: string]: unknown;
+  quoteAssetVolume24h: number;
 }
 
 export default function MarketHeader({
   pair,
-  type,
+  marketData,
 }: {
   pair: string;
   type: string;
+  marketData: MarketData;
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -37,41 +36,13 @@ export default function MarketHeader({
   const [imageError, setImageError] = useState(false);
   const symbol = useMemo(() => pair.replace("_", ""), [pair]);
 
-  const { data: initialMarketData, isLoading: marketDataLoading } =
-    useQuery<MarketData>({
-      queryKey: ["marketData", symbol, type],
-      queryFn: () =>
-        axiosInstance
-          .get(`/symbols/market-data/${symbol}`, { params: { type } })
-          .then((r) => r.data?.data),
-      refetchOnWindowFocus: false,
-    });
-
-  const [marketData, setMarketData] = useState<MarketData | null>(null);
-  const { marketData: wsMarketData } = useMarketData(symbol, type);
-
-  // Set initial data from API (only if no WS data yet)
-  useEffect(() => {
-    if (initialMarketData) {
-      setMarketData(initialMarketData);
-    }
-  }, [initialMarketData]);
-
-  // Update when WebSocket sends new data (priority over API data)
-  useEffect(() => {
-    if (wsMarketData) {
-      console.log("🔄 MarketHeader WS update:", wsMarketData);
-      setMarketData(wsMarketData as MarketData);
-    }
-  }, [wsMarketData]);
-
   const { data, isLoading: symbolInfoLoading } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol],
     queryFn: () =>
       axiosInstance.get(`/symbols/code/${symbol}`).then((r) => r.data?.data),
   });
 
-  const isLoading = marketDataLoading || symbolInfoLoading || !marketData;
+  const isLoading = symbolInfoLoading;
 
   const baseAssetCode = useMemo(() => {
     if (data?.base_asset) {
@@ -96,7 +67,7 @@ export default function MarketHeader({
   useEffect(() => {
     const interval = setTimeout(() => {
       checkScroll();
-    }, 300); // chờ DOM render xong
+    }, 300);
 
     const container = scrollContainerRef.current;
     if (container) {

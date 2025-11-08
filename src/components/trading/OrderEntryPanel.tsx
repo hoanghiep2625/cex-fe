@@ -18,21 +18,25 @@ import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
 import { LuCircleAlert, LuPlus } from "react-icons/lu";
 import { IoMdArrowDropdown } from "react-icons/io";
-import { useBalance, useMarketData } from "@/hooks/useWebSocket";
+import { useBalance } from "@/hooks/useWebSocket";
 import { useQuery } from "@tanstack/react-query";
+import { MarketData } from "@/types";
 
 export default function OrderEntryPanel({
   pair,
   type,
+  marketData,
 }: {
   pair: string;
   type: string;
+  marketData: MarketData;
 }) {
   const [orderType, setOrderType] = useState<"limit" | "market" | "stop">(
     "limit"
   );
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { symbol } = useSymbol();
+  console.log("marketData123", marketData);
 
   const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
 
@@ -54,23 +58,8 @@ export default function OrderEntryPanel({
     });
 
   const { balances: wsBalances } = useBalance(symbolCode, walletType);
-  const { marketData: wsMarketData } = useMarketData(symbolCode, type);
-  const { data: initialMarketData } = useQuery({
-    queryKey: ["marketData", symbolCode, type],
-    queryFn: () =>
-      axiosInstance
-        .get(`/symbols/market-data/${symbolCode}`, {
-          params: { type },
-        })
-        .then((r) => r.data?.data || {}),
-    refetchOnWindowFocus: false,
-  });
 
   const [balances, setBalances] = useState<BalanceData | null>(null);
-  const [marketData, setMarketData] = useState<{
-    price?: number;
-    currentPrice?: number;
-  } | null>(null);
 
   // Set initial balances
   useEffect(() => {
@@ -81,28 +70,15 @@ export default function OrderEntryPanel({
 
   // Update balances from WebSocket
   useEffect(() => {
-    if (wsBalances && Object.keys(wsBalances as Record<string, unknown>).length > 0) {
+    if (
+      wsBalances &&
+      Object.keys(wsBalances as Record<string, unknown>).length > 0
+    ) {
       setBalances(wsBalances as BalanceData);
     }
   }, [wsBalances]);
 
-  // Set initial market data
-  useEffect(() => {
-    if (initialMarketData) {
-      setMarketData(
-        initialMarketData as { price?: number; currentPrice?: number }
-      );
-    }
-  }, [initialMarketData]);
-
-  // Update market data from WebSocket
-  useEffect(() => {
-    if (wsMarketData) {
-      setMarketData(wsMarketData as { price?: number; currentPrice?: number });
-    }
-  }, [wsMarketData]);
-
-  const currentPrice = marketData?.currentPrice || marketData?.price || 0;
+  const currentPrice = marketData?.price || 0;
   const loading = balanceLoading;
   const [activeTab, setActiveTab] = useState("spot");
   const [buyPrice, setBuyPrice] = useState("");

@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useSymbol } from "@/context/SymbolContext";
 import axiosInstance from "@/lib/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
-import { Symbol } from "@/types";
+import { MarketData, Symbol } from "@/types";
 import { FaArrowUpLong, FaArrowDownLong } from "react-icons/fa6";
 import { PiApproximateEqualsBold } from "react-icons/pi";
 import { LuChevronRight } from "react-icons/lu";
 import { fmt, formatQty } from "@/lib/formatters";
-import { useOrderBook, useRecentTrades, useMarketData } from "@/hooks";
+import { useOrderBook, useRecentTrades } from "@/hooks";
 
 interface OrderBookLevel {
   price: number | string;
@@ -33,13 +33,14 @@ interface TradeData {
   time: number;
   takerSide: "BUY" | "SELL";
 }
-
 export default function OrderBook({
   pair,
   type,
+  marketData,
 }: {
   pair: string;
   type: string;
+  marketData: MarketData;
 }) {
   const [grouping, setGrouping] = useState("0.01");
   const [hoveredAskIndex, setHoveredAskIndex] = useState<number | null>(null);
@@ -69,48 +70,7 @@ export default function OrderBook({
     symbol?.code || pair.replace("_", "")
   );
   const trades = (rawTrades as TradeData[]) || [];
-
-  // Fetch initial market data from REST API
-  const { data: initialMarketData } = useQuery({
-    queryKey: ["marketData", symbolCode, type],
-    queryFn: () =>
-      axiosInstance
-        .get(`/symbols/market-data/${symbolCode}`, {
-          params: { type },
-        })
-        .then((r) => r.data?.data || {}),
-    refetchOnWindowFocus: false,
-  });
-
-  // Market data state
-  const [marketData, setMarketData] = useState<{
-    price?: number;
-    currentPrice?: number;
-  } | null>(null);
-
-  // Subscribe to WebSocket updates for market data
-  const { marketData: wsMarketData } = useMarketData(
-    symbolCode,
-    type || "spot"
-  );
-
-  // Set initial market data
-  useEffect(() => {
-    if (initialMarketData) {
-      setMarketData(
-        initialMarketData as { price?: number; currentPrice?: number }
-      );
-    }
-  }, [initialMarketData]);
-
-  // Update when WebSocket sends new data
-  useEffect(() => {
-    if (wsMarketData) {
-      setMarketData(wsMarketData as { price?: number; currentPrice?: number });
-    }
-  }, [wsMarketData]);
-
-  const currentPrice = marketData?.currentPrice || marketData?.price || 0;
+  const currentPrice = marketData?.price || 0;
 
   const { data } = useQuery<Symbol>({
     queryKey: ["symbolInfo", symbol?.code || pair.replace("_", "")],

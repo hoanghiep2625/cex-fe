@@ -21,7 +21,6 @@ export default function GlobalStatusBar({
   pair: string;
   type: string;
 }) {
-  // Fetch initial tickers data from REST API
   const { data: initialTickers } = useQuery<TickerData[]>({
     queryKey: ["tickers", type],
     queryFn: () =>

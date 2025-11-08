@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useWebSocketContext } from "@/context/WebSocketContext";
+import { MarketData } from "@/types";
 
 interface WebSocketMessage {
   channel: string;
@@ -46,9 +47,7 @@ export function useRecentTrades(symbol: string, limit = 50) {
 }
 
 export function useMarketData(symbol: string, type = "spot") {
-  const [marketData, setMarketData] = useState<Record<string, unknown> | null>(
-    null
-  );
+  const [marketData, setMarketData] = useState<MarketData>();
   const { subscribe } = useWebSocketContext();
 
   useEffect(() => {
@@ -59,8 +58,7 @@ export function useMarketData(symbol: string, type = "spot") {
       (msg: WebSocketMessage) => {
         if (msg.action === "update") {
           console.log("📊 MarketData Update:", msg.data);
-          // Force new object reference to trigger re-render
-          setMarketData({ ...(msg.data as Record<string, unknown>) });
+          setMarketData(msg.data as MarketData);
         }
       }
     );
