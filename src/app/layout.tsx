@@ -21,7 +21,7 @@ export default function RootLayout({
       <head></head>
       <body className={`${beVietnamPro.variable} antialiased`}>
         <ClientLayout>
-          <WebSocketProvider url="ws://localhost:3000/ws">
+          <WebSocketProvider>
             <SymbolProvider>
               <Toaster position="bottom-right" />
               <div className="max-w-[1920px] mx-auto">{children}</div>

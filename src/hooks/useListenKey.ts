@@ -5,51 +5,88 @@ export function useListenKey() {
   const [listenKey, setListenKey] = useState<string | undefined>(undefined);
   const [listenKeyFetched, setListenKeyFetched] = useState(false);
 
-  const fetchListenKey = useCallback(async (forceRefresh = false) => {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      setListenKeyFetched(true);
-      return;
-    }
-
-    if (!forceRefresh) {
-      const storedKey = localStorage.getItem("listenKey");
-      const storedExpiresAt = localStorage.getItem("listenKeyExpiresAt");
-
-      if (storedKey && storedExpiresAt) {
-        const expiresAt = new Date(storedExpiresAt);
-        const now = new Date();
-        // Check if still valid (not expired)
-        if (expiresAt > now) {
-          setListenKey(storedKey);
-          setListenKeyFetched(true);
-          return;
+  const validateListenKeyWithBackend = useCallback(
+    async (key: string): Promise<boolean> => {
+      try {
+        const response = await axiosInstance.get(
+          `/user-sessions/listen-key/validate`,
+          {
+            params: { listenKey: key },
+          }
+        );
+        const isValid = response.data?.data?.valid || false;
+        if (isValid && response.data?.data?.expiresAt) {
+          // Update expiresAt from backend (source of truth)
+          localStorage.setItem(
+            "listenKeyExpiresAt",
+            response.data.data.expiresAt
+          );
         }
-        // Expired, remove old data
-        localStorage.removeItem("listenKey");
-        localStorage.removeItem("listenKeyExpiresAt");
+        return isValid;
+      } catch (error) {
+        console.error("[useListenKey] Error validating listenKey:", error);
+        return false;
       }
-    }
+    },
+    []
+  );
 
-    // Fetch new listenKey
-    try {
-      const response = await axiosInstance.post("/user-sessions/listen-key");
-      const listenKeyData =
-        response.data?.data?.data || response.data?.data || response.data;
-      const key = listenKeyData?.listenKey;
-      const expiresAt = listenKeyData?.expiresAt;
-
-      if (key && expiresAt) {
-        localStorage.setItem("listenKey", key);
-        localStorage.setItem("listenKeyExpiresAt", expiresAt);
-        setListenKey(key);
+  const fetchListenKey = useCallback(
+    async (forceRefresh = false) => {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        setListenKeyFetched(true);
+        return;
       }
-    } catch (error) {
-      console.error("[useListenKey] Error fetching listenKey:", error);
-    } finally {
-      setListenKeyFetched(true);
-    }
-  }, []);
+
+      if (!forceRefresh) {
+        const storedKey = localStorage.getItem("listenKey");
+        const storedExpiresAt = localStorage.getItem("listenKeyExpiresAt");
+
+        if (storedKey && storedExpiresAt) {
+          const expiresAt = new Date(storedExpiresAt);
+          const now = new Date();
+          // Check if still valid locally (not expired)
+          if (expiresAt > now) {
+            // ✅ Validate với backend để đảm bảo listenKey còn hợp lệ
+            const isValid = await validateListenKeyWithBackend(storedKey);
+            if (isValid) {
+              setListenKey(storedKey);
+              setListenKeyFetched(true);
+              return;
+            }
+            // Backend nói invalid, remove và tạo mới
+            localStorage.removeItem("listenKey");
+            localStorage.removeItem("listenKeyExpiresAt");
+          } else {
+            // Expired locally, remove old data
+            localStorage.removeItem("listenKey");
+            localStorage.removeItem("listenKeyExpiresAt");
+          }
+        }
+      }
+
+      // Fetch new listenKey
+      try {
+        const response = await axiosInstance.post("/user-sessions/listen-key");
+        const listenKeyData =
+          response.data?.data?.data || response.data?.data || response.data;
+        const key = listenKeyData?.listenKey;
+        const expiresAt = listenKeyData?.expiresAt;
+
+        if (key && expiresAt) {
+          localStorage.setItem("listenKey", key);
+          localStorage.setItem("listenKeyExpiresAt", expiresAt);
+          setListenKey(key);
+        }
+      } catch (error) {
+        console.error("[useListenKey] Error fetching listenKey:", error);
+      } finally {
+        setListenKeyFetched(true);
+      }
+    },
+    [validateListenKeyWithBackend]
+  );
 
   useEffect(() => {
     fetchListenKey();

@@ -36,7 +36,6 @@ export default function OrderEntryPanel({
   );
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { symbol } = useSymbol();
-  console.log("marketData123", marketData);
 
   const [baseCurrency = "", quoteCurrency = ""] = (pair ?? "").split("_");
 

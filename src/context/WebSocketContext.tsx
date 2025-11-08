@@ -41,9 +41,9 @@ interface WebSocketProviderProps {
 
 export function WebSocketProvider({
   children,
-  url = process.env.NEXT_PUBLIC_WS_URL || "wss://cex.tahoanghiep.com/ws",
+  url = process.env.NEXT_PUBLIC_WS_URL || "wss://api-cex.tahoanghiep.com/ws",
 }: WebSocketProviderProps) {
-  const { listenKey, listenKeyFetched } = useListenKey();
+  const { listenKey, listenKeyFetched, fetchListenKey } = useListenKey();
   const wsRef = useRef<WebSocket | null>(null);
   const subscriptionsRef = useRef<Map<string, ChannelSubscription>>(new Map());
 
@@ -80,6 +80,25 @@ export function WebSocketProvider({
     (event: MessageEvent) => {
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
+
+        // ✅ Xử lý error về listenKey hết hạn
+        if (message.error || (message as any).error) {
+          const errorMsg = message.error || (message as any).error;
+          if (
+            typeof errorMsg === "string" &&
+            (errorMsg.includes("hết hạn") ||
+              errorMsg.includes("Không hợp lệ") ||
+              errorMsg.includes("expired") ||
+              errorMsg.includes("invalid"))
+          ) {
+            console.warn("[WS] ListenKey expired/invalid, refreshing...");
+            // Tạo listenKey mới và reconnect
+            fetchListenKey(true).then(() => {
+              // Reconnect sẽ tự động khi listenKey thay đổi
+            });
+            return;
+          }
+        }
 
         if (message.action === "connected") {
           for (const [, sub] of subscriptionsRef.current) {
@@ -152,8 +171,16 @@ export function WebSocketProvider({
       };
 
       ws.onmessage = handleMessage;
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         wsRef.current = null;
+        // ✅ Nếu close code là 1008 (policy violation) hoặc có error, có thể do listenKey hết hạn
+        // Validate listenKey trước khi reconnect
+        if (listenKey && (event.code === 1008 || event.code === 1002)) {
+          console.warn(
+            "[WS] Connection closed with error, validating listenKey..."
+          );
+          fetchListenKey(true);
+        }
         setTimeout(connect, 3000);
       };
     };
@@ -165,7 +192,7 @@ export function WebSocketProvider({
         wsRef.current = null;
       }
     };
-  }, [url, listenKey, listenKeyFetched, handleMessage, send]);
+  }, [url, listenKey, listenKeyFetched, handleMessage, send, fetchListenKey]);
 
   return (
     <WebSocketContext.Provider value={{ subscribe, send }}>

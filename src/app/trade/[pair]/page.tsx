@@ -45,13 +45,25 @@ export default function TradePage() {
 
   return (
     <div>
-      <MarketTitleUpdater pair={pair} type={type} marketData={marketData as MarketData} />
+      <MarketTitleUpdater
+        pair={pair}
+        type={type}
+        marketData={marketData as MarketData}
+      />
       <MenuBar />
       <div className="flex min-h-[900px] gap-1 mt-1 mx-1">
         <div className="flex-1 gap-1 flex flex-col">
-          <MarketHeader pair={pair} type={type} marketData={marketData as MarketData} />
+          <MarketHeader
+            pair={pair}
+            type={type}
+            marketData={marketData as MarketData}
+          />
           <div className="flex-1 flex gap-1">
-            <OrderBook pair={pair} type={type} marketData={marketData as MarketData} />
+            <OrderBook
+              pair={pair}
+              type={type}
+              marketData={marketData as MarketData}
+            />
             <div className="flex flex-1 flex-col gap-1">
               <ChartPanel pair={pair} type={type} />
               <OrderEntryPanel
