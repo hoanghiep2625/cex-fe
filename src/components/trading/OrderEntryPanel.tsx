@@ -16,8 +16,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import TabUnderline from "@/components/ui/TabUnderline";
 import NumberInput from "@/components/ui/NumberInput";
-import { LuCircleAlert, LuPlus } from "react-icons/lu";
-import { IoMdArrowDropdown } from "react-icons/io";
+import { LuPlus } from "react-icons/lu";
 import { useBalance } from "@/hooks/useWebSocket";
 import { useQuery } from "@tanstack/react-query";
 import { MarketData } from "@/types";
@@ -86,6 +85,10 @@ export default function OrderEntryPanel({
   const [sellPrice, setSellPrice] = useState("");
   const [sellQty, setSellQty] = useState("");
   const [sellLoading, setSellLoading] = useState(false);
+
+  // Market order states
+  const [buyMarketAsset, setBuyMarketAsset] = useState(quoteCurrency); // Mặc định mua bằng USDT
+  const [sellMarketAsset, setSellMarketAsset] = useState(baseCurrency); // Mặc định bán BTC
   const buyTotal =
     buyPrice && buyQty
       ? (parseFloat(buyPrice) * parseFloat(buyQty)).toFixed(8)
@@ -96,29 +99,50 @@ export default function OrderEntryPanel({
       : "0";
 
   const handleBuyOrder = async () => {
-    if (!buyPrice || !buyQty) {
-      toast.error("Vui lòng nhập giá và số lượng");
-      return;
+    if (orderType === "limit") {
+      if (!buyPrice || !buyQty) {
+        toast.error("Vui lòng nhập giá và số lượng");
+        return;
+      }
+    } else if (orderType === "market") {
+      if (!buyQty) {
+        toast.error("Vui lòng nhập số lượng");
+        return;
+      }
     }
 
     try {
       setBuyLoading(true);
 
       const symbolCode = symbol?.code || pair.replace("_", "");
-      const orderData = {
+      const orderData: any = {
         symbol: symbolCode,
         side: "BUY",
-        type: orderType === "limit" ? "LIMIT" : orderType.toUpperCase(),
-        price: buyPrice,
+        type: orderType === "limit" ? "LIMIT" : "MARKET",
         qty: buyQty,
-        tif: "GTC",
         client_order_id: `buy_${Date.now()}`,
       };
+
+      // Chỉ gửi price và tif cho limit order
+      if (orderType === "limit") {
+        orderData.price = buyPrice;
+        orderData.tif = "GTC";
+      }
+
+      // Nếu market order, thêm quote_order_qty nếu chọn quote asset
+      if (orderType === "market" && buyMarketAsset === quoteCurrency) {
+        orderData.quote_order_qty = buyQty;
+        delete orderData.qty;
+      }
 
       console.log("Placing buy order:", orderData);
       await axiosInstance.post("/orders", orderData);
 
-      toast.success(`Lệnh mua thành công!`);
+      toast.success(
+        `Lệnh mua ${
+          orderType === "limit" ? "giới hạn" : "thị trường"
+        } thành công!`
+      );
       setBuyPrice("");
       setBuyQty("");
     } catch (error) {
@@ -134,29 +158,50 @@ export default function OrderEntryPanel({
 
   // Submit sell order
   const handleSellOrder = async () => {
-    if (!sellPrice || !sellQty) {
-      toast.error("Vui lòng nhập giá và số lượng");
-      return;
+    if (orderType === "limit") {
+      if (!sellPrice || !sellQty) {
+        toast.error("Vui lòng nhập giá và số lượng");
+        return;
+      }
+    } else if (orderType === "market") {
+      if (!sellQty) {
+        toast.error("Vui lòng nhập số lượng");
+        return;
+      }
     }
 
     try {
       setSellLoading(true);
 
       const symbolCode = symbol?.code || pair.replace("_", "");
-      const orderData = {
+      const orderData: any = {
         symbol: symbolCode,
         side: "SELL",
-        type: orderType === "limit" ? "LIMIT" : orderType.toUpperCase(),
-        price: sellPrice,
+        type: orderType === "limit" ? "LIMIT" : "MARKET",
         qty: sellQty,
-        tif: "GTC",
         client_order_id: `sell_${Date.now()}`,
       };
+
+      // Chỉ gửi price và tif cho limit order
+      if (orderType === "limit") {
+        orderData.price = sellPrice;
+        orderData.tif = "GTC";
+      }
+
+      // Nếu market order, thêm quote_order_qty nếu chọn quote asset
+      if (orderType === "market" && sellMarketAsset === quoteCurrency) {
+        orderData.quote_order_qty = sellQty;
+        delete orderData.qty;
+      }
 
       console.log("Placing sell order:", orderData);
       await axiosInstance.post("/orders", orderData);
 
-      toast.success(`Lệnh bán thành công!`);
+      toast.success(
+        `Lệnh bán ${
+          orderType === "limit" ? "giới hạn" : "thị trường"
+        } thành công!`
+      );
       setSellPrice("");
       setSellQty("");
     } catch (error) {
@@ -239,188 +284,335 @@ export default function OrderEntryPanel({
               >
                 Thị trường
               </button>
-              <button
-                onClick={() => setOrderType("stop")}
-                className={`text-[12px] font-semibold flex items-center gap-1 ${
-                  orderType === "stop"
-                    ? "dark:text-white text-black"
-                    : "dark:text-gray-400 text-gray-400 hover:dark:text-white hover:text-black"
-                }`}
-              >
-                Stop Limit
-                <span className="text-xs">
-                  <IoMdArrowDropdown className="w-4 h-4" />
-                </span>
-              </button>
-              <button className="text-gray-400 hover:dark:text-gray-200 hover:text-gray-800">
-                <LuCircleAlert width={16} height={16} />
-              </button>
             </div>
 
-            <div className="flex-1 px-4 pb-3 grid grid-cols-2 gap-4 overflow-y-auto">
-              {/* BUY FORM */}
-              <div className="space-y-3">
-                {/* Giá */}
-                <NumberInput
-                  label="Giá"
-                  value={buyPrice}
-                  onChange={setBuyPrice}
-                  unit={quoteCurrency}
-                  showButtons={true}
-                />
+            {/* LIMIT ORDER TAB */}
+            {orderType === "limit" && (
+              <div className="flex-1 px-4 pb-3 grid grid-cols-2 gap-4 overflow-y-auto">
+                {/* BUY FORM */}
+                <div className="space-y-3">
+                  {/* Giá */}
+                  <NumberInput
+                    label="Giá"
+                    value={buyPrice}
+                    onChange={setBuyPrice}
+                    unit={quoteCurrency}
+                    showButtons={true}
+                  />
 
-                <NumberInput
-                  label="Số lượng"
-                  value={buyQty}
-                  onChange={setBuyQty}
-                  unit={baseCurrency}
-                  showButtons={true}
-                />
+                  <NumberInput
+                    label="Số lượng"
+                    value={buyQty}
+                    onChange={setBuyQty}
+                    unit={baseCurrency}
+                    showButtons={true}
+                  />
 
-                {/* Slider */}
-                <div className="">
-                  <input type="range" className="w-full h-0.5 " />
-                </div>
+                  {/* Slider */}
+                  <div className="">
+                    <input type="range" className="w-full h-0.5 " />
+                  </div>
 
-                <NumberInput
-                  label="Tổng"
-                  value={buyTotal}
-                  onChange={() => {}}
-                  unit={quoteCurrency}
-                  readOnly={true}
-                  showButtons={false}
-                  rounded="rounded-md"
-                />
+                  <NumberInput
+                    label="Tổng"
+                    value={buyTotal}
+                    onChange={() => {}}
+                    unit={quoteCurrency}
+                    readOnly={true}
+                    showButtons={false}
+                    rounded="rounded-md"
+                  />
 
-                {/* Available - BUY */}
-                <div className="text-xs space-y-1">
-                  <div className="flex justify-between dark:text-white text-black">
-                    <span className="dark:text-gray-500 text-gray-400">
-                      Khả dụng
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span>
-                        {loading ? "--" : quoteAssetBalance} {quoteCurrency}
+                  {/* Available - BUY */}
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="dark:text-gray-500 text-gray-400">
+                        Khả dụng
                       </span>
-                      <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
-                        <LuPlus
-                          width={12}
-                          height={12}
-                          className="text-white dark:text-[#181A20]"
-                        />
+                      <div className="flex items-center gap-1">
+                        <span>
+                          {loading ? "--" : quoteAssetBalance} {quoteCurrency}
+                        </span>
+                        <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
+                          <LuPlus
+                            width={12}
+                            height={12}
+                            className="text-white dark:text-[#181A20]"
+                          />
+                        </div>
                       </div>
                     </div>
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="underline dark:text-gray-500 text-gray-400">
+                        Mua tối đa
+                      </span>
+                      <span>
+                        {loading || !currentPrice
+                          ? "--"
+                          : (
+                              parseFloat(quoteAssetBalance) / currentPrice
+                            ).toFixed(8)}{" "}
+                        {baseCurrency}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between dark:text-white text-black">
-                    <span className="underline dark:text-gray-500 text-gray-400">
-                      Mua tối đa
-                    </span>
-                    <span>
-                      {loading || !currentPrice
-                        ? "--"
-                        : (
-                            parseFloat(quoteAssetBalance) / currentPrice
-                          ).toFixed(8)}{" "}
-                      {baseCurrency}
-                    </span>
-                  </div>
+
+                  {!isAuthenticated ? (
+                    <Link
+                      href="/login"
+                      className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      Đăng nhập
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleBuyOrder}
+                      disabled={buyLoading}
+                      className="w-full bg-green-400 hover:bg-green-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      {buyLoading ? "Đang xử lý..." : `Mua ${baseCurrency}`}
+                    </button>
+                  )}
                 </div>
 
-                {!isAuthenticated ? (
-                  <Link
-                    href="/login"
-                    className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-                  >
-                    Đăng nhập
-                  </Link>
-                ) : (
-                  <button
-                    onClick={handleBuyOrder}
-                    disabled={buyLoading}
-                    className="w-full bg-green-400 hover:bg-green-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-                  >
-                    {buyLoading ? "Đang xử lý..." : `Mua ${baseCurrency}`}
-                  </button>
-                )}
+                {/* SELL FORM */}
+                <div className="space-y-3">
+                  <NumberInput
+                    label="Giá"
+                    value={sellPrice}
+                    onChange={setSellPrice}
+                    unit={quoteCurrency}
+                    showButtons={true}
+                  />
+
+                  <NumberInput
+                    label="Số lượng"
+                    value={sellQty}
+                    onChange={setSellQty}
+                    unit={baseCurrency}
+                    showButtons={true}
+                  />
+
+                  {/* Slider */}
+                  <div className="">
+                    <input type="range" className="w-full h-0.5 " />
+                  </div>
+
+                  <NumberInput
+                    label="Tổng"
+                    value={sellTotal}
+                    onChange={() => {}}
+                    unit={quoteCurrency}
+                    readOnly={true}
+                    showButtons={false}
+                    rounded="rounded-md"
+                  />
+
+                  {/* Available - SELL */}
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="dark:text-gray-500 text-gray-400">
+                        Khả dụng
+                      </span>
+                      <span>
+                        {loading ? "-" : baseAssetBalance} {baseCurrency}
+                      </span>
+                    </div>
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="underline dark:text-gray-500 text-gray-400">
+                        Bán tối đa
+                      </span>
+                      <span>
+                        {loading || !currentPrice
+                          ? "--"
+                          : (
+                              parseFloat(baseAssetBalance) * currentPrice
+                            ).toFixed(8)}{" "}
+                        {quoteCurrency}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sell Button */}
+                  {!isAuthenticated ? (
+                    <Link
+                      href="/login"
+                      className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      Đăng nhập
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleSellOrder}
+                      disabled={sellLoading}
+                      className="w-full bg-red-400 hover:bg-red-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      {sellLoading ? "Đang xử lý..." : `Bán ${baseCurrency}`}
+                    </button>
+                  )}
+                </div>
               </div>
+            )}
 
-              {/* SELL FORM */}
-              <div className="space-y-3">
-                <NumberInput
-                  label="Giá"
-                  value={sellPrice}
-                  onChange={setSellPrice}
-                  unit={quoteCurrency}
-                  showButtons={true}
-                />
+            {/* MARKET ORDER TAB */}
+            {orderType === "market" && (
+              <div className="flex-1 px-4 pb-3 grid grid-cols-2 gap-4 overflow-y-auto">
+                {/* BUY FORM - Market */}
 
-                <NumberInput
-                  label="Số lượng"
-                  value={sellQty}
-                  onChange={setSellQty}
-                  unit={baseCurrency}
-                  showButtons={true}
-                />
+                <div className="space-y-3">
+                  <NumberInput
+                    label="Giá"
+                    value=" "
+                    onChange={() => {}}
+                    unit="Giá thị trường"
+                    showButtons={false}
+                    rounded="rounded-md"
+                    disabled={true}
+                  />
 
-                {/* Slider */}
-                <div className="">
-                  <input type="range" className="w-full h-0.5 " />
+                  <NumberInput
+                    label="Số lượng"
+                    value={buyQty}
+                    onChange={setBuyQty}
+                    unit={buyMarketAsset}
+                    showButtons={true}
+                    buttonType="selector"
+                    assets={[quoteCurrency, baseCurrency]}
+                    onAssetChange={setBuyMarketAsset}
+                  />
+
+                  {/* Slider */}
+                  <div className="">
+                    <input type="range" className="w-full h-0.5 " />
+                  </div>
+
+                  {/* Available - BUY */}
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="dark:text-gray-500 text-gray-400">
+                        Khả dụng
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span>
+                          {loading ? "--" : quoteAssetBalance} {quoteCurrency}
+                        </span>
+                        <div className="rounded-full bg-yellow-400 w-4 h-4 flex items-center justify-center text-sm text-[#181A20]">
+                          <LuPlus
+                            width={12}
+                            height={12}
+                            className="text-white dark:text-[#181A20]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="dark:text-gray-500 text-gray-400">
+                        Tổng (ước tính)
+                      </span>
+                      <span>
+                        {buyQty && currentPrice
+                          ? buyMarketAsset === quoteCurrency
+                            ? `${buyQty} ${quoteCurrency}`
+                            : `${(parseFloat(buyQty) * currentPrice).toFixed(
+                                8
+                              )} ${quoteCurrency}`
+                          : `0 ${quoteCurrency}`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!isAuthenticated ? (
+                    <Link
+                      href="/login"
+                      className="w-full bg-green-400 hover:bg-green-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      Đăng nhập
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleBuyOrder}
+                      disabled={buyLoading}
+                      className="w-full bg-green-400 hover:bg-green-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      {buyLoading ? "Đang xử lý..." : `Mua ${baseCurrency}`}
+                    </button>
+                  )}
                 </div>
 
-                <NumberInput
-                  label="Tổng"
-                  value={sellTotal}
-                  onChange={() => {}}
-                  unit={quoteCurrency}
-                  readOnly={true}
-                  showButtons={false}
-                  rounded="rounded-md"
-                />
+                {/* SELL FORM - Market */}
+                <div className="space-y-3">
+                  <NumberInput
+                    label="Giá"
+                    value=" "
+                    onChange={() => {}}
+                    unit="Giá thị trường"
+                    showButtons={false}
+                    rounded="rounded-md"
+                    disabled={true}
+                  />
 
-                {/* Available - SELL */}
-                <div className="text-xs space-y-1">
-                  <div className="flex justify-between dark:text-white text-black">
-                    <span className="dark:text-gray-500 text-gray-400">
-                      Khả dụng
-                    </span>
-                    <span>
-                      {loading ? "-" : baseAssetBalance} {baseCurrency}
-                    </span>
+                  <NumberInput
+                    label="Số lượng"
+                    value={sellQty}
+                    onChange={setSellQty}
+                    unit={sellMarketAsset}
+                    showButtons={true}
+                    buttonType="selector"
+                    assets={[baseCurrency, quoteCurrency]}
+                    onAssetChange={setSellMarketAsset}
+                  />
+
+                  {/* Slider */}
+                  <div className="">
+                    <input type="range" className="w-full h-0.5 " />
                   </div>
-                  <div className="flex justify-between dark:text-white text-black">
-                    <span className="underline dark:text-gray-500 text-gray-400">
-                      Bán tối đa
-                    </span>
-                    <span>
-                      {loading || !currentPrice
-                        ? "--"
-                        : (parseFloat(baseAssetBalance) * currentPrice).toFixed(
-                            8
-                          )}{" "}
-                      {quoteCurrency}
-                    </span>
+
+                  {/* Available - SELL */}
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="dark:text-gray-500 text-gray-400">
+                        Khả dụng
+                      </span>
+                      <span>
+                        {loading ? "-" : baseAssetBalance} {baseCurrency}
+                      </span>
+                    </div>
+                    <div className="flex justify-between dark:text-white text-black">
+                      <span className="dark:text-gray-500 text-gray-400">
+                        Tổng (ước tính)
+                      </span>
+                      <span>
+                        {sellQty && currentPrice
+                          ? sellMarketAsset === baseCurrency
+                            ? `${(parseFloat(sellQty) * currentPrice).toFixed(
+                                8
+                              )} ${quoteCurrency}`
+                            : `${sellQty} ${quoteCurrency}`
+                          : `0 ${quoteCurrency}`}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Sell Button */}
+                  {!isAuthenticated ? (
+                    <Link
+                      href="/login"
+                      className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      Đăng nhập
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleSellOrder}
+                      disabled={sellLoading}
+                      className="w-full bg-red-400 hover:bg-red-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
+                    >
+                      {sellLoading ? "Đang xử lý..." : `Bán ${baseCurrency}`}
+                    </button>
+                  )}
                 </div>
-
-                {/* Sell Button */}
-                {!isAuthenticated ? (
-                  <Link
-                    href="/login"
-                    className="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-                  >
-                    Đăng nhập
-                  </Link>
-                ) : (
-                  <button
-                    onClick={handleSellOrder}
-                    disabled={sellLoading}
-                    className="w-full bg-red-400 hover:bg-red-500 disabled:bg-gray-500 text-white font-semibold py-2.5 rounded text-sm h-9 flex items-center justify-center"
-                  >
-                    {sellLoading ? "Đang xử lý..." : `Bán ${baseCurrency}`}
-                  </button>
-                )}
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

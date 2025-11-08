@@ -28,6 +28,7 @@ import {
   usePendingOrdersByUser,
   useAllOrdersByUser,
 } from "@/hooks/useWebSocket";
+import { formatPrice, formatQty } from "@/lib/formatters";
 
 export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   const [hideOtherPairs, setHideOtherPairs] = useState(false);
@@ -49,8 +50,8 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
   >({
     queryKey: ["pendingOrders", symbolCode],
     queryFn: () => {
-      const params: { statuses: string; symbol?: string } = { 
-        statuses: "NEW,PARTIALLY_FILLED" 
+      const params: { statuses: string; symbol?: string } = {
+        statuses: "NEW,PARTIALLY_FILLED",
       };
       if (symbolCode) params.symbol = symbolCode;
       return axiosInstance
@@ -76,20 +77,22 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
     enabled: isAuthenticated,
   });
 
-  const { data: initialTrades, isLoading: tradesLoading } = useQuery<Array<{
-    id: string;
-    symbol: string;
-    price: string;
-    quantity: string;
-    quote_quantity: string;
-    taker_side: string;
-    takerSide?: string;
-    liquidity?: string;
-    created_at: string;
-    time?: string;
-    maker_fee?: string;
-    taker_fee?: string;
-  }>>({
+  const { data: initialTrades, isLoading: tradesLoading } = useQuery<
+    Array<{
+      id: string;
+      symbol: string;
+      price: string;
+      quantity: string;
+      quote_quantity: string;
+      taker_side: string;
+      takerSide?: string;
+      liquidity?: string;
+      created_at: string;
+      time?: string;
+      maker_fee?: string;
+      taker_fee?: string;
+    }>
+  >({
     queryKey: ["myTrades", symbolCode],
     queryFn: () =>
       axiosInstance
@@ -151,22 +154,6 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
       toast.error("Huỷ lệnh thất bại");
     },
   });
-
-  const formatPrice = (price: string | number) => {
-    const num = typeof price === "string" ? parseFloat(price) : price;
-    return num.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 8,
-    });
-  };
-
-  const formatQty = (qty: string | number) => {
-    const num = typeof qty === "string" ? parseFloat(qty) : qty;
-    return num.toLocaleString("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 8,
-    });
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -543,7 +530,9 @@ export default function UserOrderManagementPanel({ pair }: { pair: string }) {
                                 >
                                   <td className="py-2 px-2">
                                     {new Date(
-                                      trade.created_at || trade.time || Date.now()
+                                      trade.created_at ||
+                                        trade.time ||
+                                        Date.now()
                                     ).toLocaleString("vi-VN")}
                                   </td>
                                   <td className="py-2 px-2 font-semibold">
