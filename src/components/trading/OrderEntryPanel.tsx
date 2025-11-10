@@ -115,7 +115,17 @@ export default function OrderEntryPanel({
       setBuyLoading(true);
 
       const symbolCode = symbol?.code || pair.replace("_", "");
-      const orderData: any = {
+      const orderData: {
+        symbol: string;
+        side: "BUY" | "SELL";
+        type: "LIMIT" | "MARKET";
+        qty?: string;
+        price?: string;
+        tif?: string;
+        quote_order_qty?: string;
+        slippage?: number;
+        client_order_id: string;
+      } = {
         symbol: symbolCode,
         side: "BUY",
         type: orderType === "limit" ? "LIMIT" : "MARKET",
@@ -174,7 +184,17 @@ export default function OrderEntryPanel({
       setSellLoading(true);
 
       const symbolCode = symbol?.code || pair.replace("_", "");
-      const orderData: any = {
+      const orderData: {
+        symbol: string;
+        side: "BUY" | "SELL";
+        type: "LIMIT" | "MARKET";
+        qty?: string;
+        price?: string;
+        tif?: string;
+        quote_order_qty?: string;
+        slippage?: number;
+        client_order_id: string;
+      } = {
         symbol: symbolCode,
         side: "SELL",
         type: orderType === "limit" ? "LIMIT" : "MARKET",

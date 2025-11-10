@@ -63,21 +63,23 @@ export default function ChartPanel({
         })
         .then((r) => {
           const data = r.data?.data || [];
-          return data.map((candle: {
-            open_time: number;
-            open: string;
-            high: string;
-            low: string;
-            close: string;
-            volume: string;
-          }) => ({
-            open_time: candle.open_time,
-            open: candle.open,
-            high: candle.high,
-            low: candle.low,
-            close: candle.close,
-            volume: candle.volume,
-          }));
+          return data.map(
+            (candle: {
+              open_time: number;
+              open: string;
+              high: string;
+              low: string;
+              close: string;
+              volume: string;
+            }) => ({
+              open_time: candle.open_time,
+              open: candle.open,
+              high: candle.high,
+              low: candle.low,
+              close: candle.close,
+              volume: candle.volume,
+            })
+          );
         }),
     refetchOnWindowFocus: false,
   });
