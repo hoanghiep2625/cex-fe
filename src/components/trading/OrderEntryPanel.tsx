@@ -375,6 +375,7 @@ export default function OrderEntryPanel({
                   {/* Slider - BUY */}
                   <div className="px-1 py-2">
                     <InputRange
+                      disabled={!isAuthenticated}
                       value={
                         buyQty && currentPrice
                           ? (parseFloat(buyQty) /
@@ -477,6 +478,7 @@ export default function OrderEntryPanel({
                   {/* Slider - SELL */}
                   <div className="px-1 py-2">
                     <InputRange
+                      disabled={!isAuthenticated}
                       value={
                         sellQty && currentPrice
                           ? (parseFloat(sellQty) /
@@ -585,6 +587,7 @@ export default function OrderEntryPanel({
                   {/* Slider - MARKET BUY */}
                   <div className="px-1 py-2">
                     <InputRange
+                      disabled={!isAuthenticated}
                       value={buySliderValue}
                       onChange={(sliderValue) => {
                         setBuySliderValue(sliderValue);
@@ -687,6 +690,7 @@ export default function OrderEntryPanel({
                   {/* Slider - MARKET SELL */}
                   <div className="px-1 py-2">
                     <InputRange
+                      disabled={!isAuthenticated}
                       value={sellSliderValue}
                       onChange={(sliderValue) => {
                         setSellSliderValue(sliderValue);

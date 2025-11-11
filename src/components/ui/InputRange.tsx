@@ -7,6 +7,7 @@ interface InputRangeProps {
   onChange?: (value: number) => void;
   max?: number;
   min?: number;
+  disabled?: boolean;
 }
 
 export default function InputRange({
@@ -14,6 +15,7 @@ export default function InputRange({
   onChange: onExternalChange,
   max = 100,
   min = 0,
+  disabled = false,
 }: InputRangeProps) {
   const [value, setValue] = useState(externalValue);
   const [isDragging, setIsDragging] = useState(false);
@@ -26,7 +28,9 @@ export default function InputRange({
   }, [externalValue]);
 
   const handleMouseDown = () => {
-    setIsDragging(true);
+    if (!disabled) {
+      setIsDragging(true);
+    }
   };
 
   useEffect(() => {
@@ -86,10 +90,14 @@ export default function InputRange({
 
       {/* Thumb (nút trượt) - có thể thay hình ảnh ở đây */}
       <div
-        className="absolute top-0 transform -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#181A20] border-[1.5px] border-black dark:border-white cursor-grab active:cursor-grabbing z-30 select-none rotate-45"
+        className={`absolute top-0 transform -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-[#181A20] border-[1.5px] border-black dark:border-white z-30 select-none rotate-45 ${
+          disabled
+            ? "cursor-not-allowed opacity-50"
+            : "cursor-grab active:cursor-grabbing"
+        }`}
         style={{ left: `${value}%` }}
         onMouseDown={handleMouseDown}
-        onMouseEnter={() => setIsHovering(true)}
+        onMouseEnter={() => !disabled && setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       ></div>
 
@@ -99,7 +107,7 @@ export default function InputRange({
           className="absolute -top-8 transform -translate-x-1/2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-semibold px-1 py-0.5 rounded whitespace-nowrap z-40"
           style={{ left: `${value}%` }}
         >
-          {value}%
+          {Math.round(value)}%
         </div>
       )}
     </div>
