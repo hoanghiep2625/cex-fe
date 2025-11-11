@@ -31,7 +31,6 @@ export function useOrderBook(symbol: string, type = "spot") {
 export function useRecentTrades(symbol: string, limit = 50) {
   const [trades, setTrades] = useState<unknown[]>([]);
   const { subscribe } = useWebSocketContext();
-
   useEffect(() => {
     if (!symbol) return;
     return subscribe(

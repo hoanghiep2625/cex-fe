@@ -9,7 +9,7 @@ import { FaArrowUpLong, FaArrowDownLong } from "react-icons/fa6";
 import { PiApproximateEqualsBold } from "react-icons/pi";
 import { LuChevronRight } from "react-icons/lu";
 import { fmt, formatQty } from "@/lib/formatters";
-import { useOrderBook, useRecentTrades } from "@/hooks";
+import { useOrderBook } from "@/hooks";
 
 interface OrderBookLevel {
   price: number | string;
@@ -37,10 +37,12 @@ export default function OrderBook({
   pair,
   type,
   marketData,
+  trades,
 }: {
   pair: string;
   type: string;
   marketData: MarketData;
+  trades: TradeData[];
 }) {
   const [grouping, setGrouping] = useState("0.01");
   const [hoveredAskIndex, setHoveredAskIndex] = useState<number | null>(null);
@@ -58,18 +60,12 @@ export default function OrderBook({
       refetchOnWindowFocus: false,
     });
 
-  // Subscribe to WebSocket updates
   const { orderBook: wsOrderBook } = useOrderBook(symbolCode, type || "spot");
 
-  // Use WebSocket update if available, otherwise use initial data from REST API
   const orderBook = useMemo(() => {
     return (wsOrderBook as OrderBookData | null) || initialOrderBook || null;
   }, [wsOrderBook, initialOrderBook]);
 
-  const { trades: rawTrades } = useRecentTrades(
-    symbol?.code || pair.replace("_", "")
-  );
-  const trades = (rawTrades as TradeData[]) || [];
   const currentPrice = marketData?.price || 0;
 
   const { data } = useQuery<Symbol>({
@@ -266,20 +262,23 @@ export default function OrderBook({
             <div className="px-4 py-3 flex justify-between items-center gap-2 z-10 dark:bg-[#181A20] bg-white">
               <div>
                 <span
-                  className={`text-lg font-semibold flex items-center  ${
-                    trades[0]?.takerSide === "BUY"
-                      ? "text-green-400"
-                      : "text-red-400"
+                  className={`text-lg font-semibold flex items-center ${
+                    trades && trades.length > 0 && trades[0]?.takerSide
+                      ? trades[0].takerSide.toUpperCase() === "BUY"
+                        ? "text-green-400"
+                        : "text-red-400"
+                      : "dark:text-white text-black"
                   }`}
                 >
                   {fmt(currentPrice)}
-                  {trades[0]?.takerSide === "BUY" ? (
-                    <FaArrowUpLong className="text-green-400 text-sm" />
-                  ) : (
-                    <FaArrowDownLong className="text-red-400 text-sm" />
-                  )}
-                  <span className="text-gray-400 text-xs font-semibold">
-                    {" "}
+                  {trades && trades.length > 0 && trades[0]?.takerSide ? (
+                    trades[0].takerSide.toUpperCase() === "BUY" ? (
+                      <FaArrowUpLong className="text-green-400 text-sm ml-1" />
+                    ) : (
+                      <FaArrowDownLong className="text-red-400 text-sm ml-1" />
+                    )
+                  ) : null}
+                  <span className="text-gray-400 text-xs font-semibold ml-1">
                     {"$"}
                     {fmt(currentPrice)}
                   </span>

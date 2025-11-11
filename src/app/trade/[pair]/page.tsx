@@ -14,9 +14,9 @@ import GlobalStatusBar from "@/components/common/GlobalStatusBar";
 import UserOrderManagementPanel from "@/components/trading/UserOrderManagementPanel";
 import MarketTitleUpdater from "@/components/market/MarketTitleUpdater";
 import { useQuery } from "@tanstack/react-query";
-import { MarketData } from "@/types";
+import { MarketData, Trade } from "@/types";
 import axiosInstance from "@/lib/axiosInstance";
-import { useMarketData } from "@/hooks";
+import { useMarketData, useRecentTrades } from "@/hooks";
 
 export default function TradePage() {
   const params = useParams();
@@ -43,6 +43,20 @@ export default function TradePage() {
   const { marketData: wsMarketData } = useMarketData(symbol, type);
   const marketData = wsMarketData || initialMarketData;
 
+  const { data: initialTrades } = useQuery<Trade[]>({
+    queryKey: ["recentTrades", symbol],
+    queryFn: () =>
+      axiosInstance
+        .get(`/trades/recent/${symbol}`, { params: { limit: 50 } })
+        .then((r) => r.data?.data || []),
+    refetchOnWindowFocus: false,
+  });
+
+  const { trades: wsTrades } = useRecentTrades(symbol);
+
+  const trades =
+    wsTrades && wsTrades.length > 0 ? wsTrades : initialTrades || [];
+
   return (
     <div>
       <MarketTitleUpdater
@@ -63,6 +77,7 @@ export default function TradePage() {
               pair={pair}
               type={type}
               marketData={marketData as MarketData}
+              trades={trades as Trade[]}
             />
             <div className="flex flex-1 flex-col gap-1">
               <ChartPanel pair={pair} type={type} />
@@ -76,7 +91,7 @@ export default function TradePage() {
         </div>
         <div className="w-[23%] h-[1005px] flex flex-col gap-1">
           <TradingPairListPanel pair={pair} type={type} />
-          <RecentTrades pair={pair} />
+          <RecentTrades trades={trades as Trade[]} />
         </div>
       </div>
       <UserOrderManagementPanel pair={pair} />

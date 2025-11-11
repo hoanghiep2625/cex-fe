@@ -20,6 +20,7 @@ import { LuPlus } from "react-icons/lu";
 import { useBalance } from "@/hooks/useWebSocket";
 import { useQuery } from "@tanstack/react-query";
 import { MarketData } from "@/types";
+import InputRange from "@/components/ui/InputRange";
 
 export default function OrderEntryPanel({
   pair,
@@ -79,6 +80,8 @@ export default function OrderEntryPanel({
   const currentPrice = marketData?.price || 0;
   const loading = balanceLoading;
   const [activeTab, setActiveTab] = useState("spot");
+
+  // Limit order states
   const [buyPrice, setBuyPrice] = useState("");
   const [buyQty, setBuyQty] = useState("");
   const [buyLoading, setBuyLoading] = useState(false);
@@ -87,8 +90,43 @@ export default function OrderEntryPanel({
   const [sellLoading, setSellLoading] = useState(false);
 
   // Market order states
+  const [buyMarketQty, setBuyMarketQty] = useState("");
+  const [sellMarketQty, setSellMarketQty] = useState("");
   const [buyMarketAsset, setBuyMarketAsset] = useState(quoteCurrency); // Mặc định mua bằng USDT
   const [sellMarketAsset, setSellMarketAsset] = useState(baseCurrency); // Mặc định bán BTC
+  const [buySliderValue, setBuySliderValue] = useState(0);
+  const [sellSliderValue, setSellSliderValue] = useState(0);
+
+  // Recalculate buy quantity when market asset changes
+  useEffect(() => {
+    if (buySliderValue > 0) {
+      if (buyMarketAsset === quoteCurrency) {
+        const maxBuyQty = parseFloat(quoteAssetBalance || "0");
+        const qty = ((buySliderValue / 100) * maxBuyQty).toFixed(8);
+        setBuyMarketQty(qty);
+      } else {
+        const maxBuyQty = parseFloat(quoteAssetBalance) / currentPrice;
+        const qty = ((buySliderValue / 100) * maxBuyQty).toFixed(8);
+        setBuyMarketQty(qty);
+      }
+    }
+  }, [buyMarketAsset, buySliderValue]);
+
+  // Recalculate sell quantity when market asset changes
+  useEffect(() => {
+    if (sellSliderValue > 0) {
+      if (sellMarketAsset === baseCurrency) {
+        const maxSellQty = parseFloat(baseAssetBalance || "0");
+        const qty = ((sellSliderValue / 100) * maxSellQty).toFixed(8);
+        setSellMarketQty(qty);
+      } else {
+        const maxSellQty = parseFloat(baseAssetBalance) * currentPrice;
+        const qty = ((sellSliderValue / 100) * maxSellQty).toFixed(8);
+        setSellMarketQty(qty);
+      }
+    }
+  }, [sellMarketAsset, sellSliderValue]);
+
   const buyTotal =
     buyPrice && buyQty
       ? (parseFloat(buyPrice) * parseFloat(buyQty)).toFixed(8)
@@ -105,7 +143,7 @@ export default function OrderEntryPanel({
         return;
       }
     } else if (orderType === "market") {
-      if (!buyQty) {
+      if (!buyMarketQty) {
         toast.error("Vui lòng nhập số lượng");
         return;
       }
@@ -115,6 +153,7 @@ export default function OrderEntryPanel({
       setBuyLoading(true);
 
       const symbolCode = symbol?.code || pair.replace("_", "");
+      const qty = orderType === "limit" ? buyQty : buyMarketQty;
       const orderData: {
         symbol: string;
         side: "BUY" | "SELL";
@@ -129,7 +168,7 @@ export default function OrderEntryPanel({
         symbol: symbolCode,
         side: "BUY",
         type: orderType === "limit" ? "LIMIT" : "MARKET",
-        qty: buyQty,
+        qty: qty,
         client_order_id: `buy_${Date.now()}`,
       };
 
@@ -141,7 +180,7 @@ export default function OrderEntryPanel({
 
       // Nếu market order, thêm quote_order_qty nếu chọn quote asset
       if (orderType === "market" && buyMarketAsset === quoteCurrency) {
-        orderData.quote_order_qty = buyQty;
+        orderData.quote_order_qty = qty;
         delete orderData.qty;
       }
 
@@ -155,6 +194,8 @@ export default function OrderEntryPanel({
       );
       setBuyPrice("");
       setBuyQty("");
+      setBuyMarketQty("");
+      setBuySliderValue(0);
     } catch (error) {
       const errorMsg =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -174,7 +215,7 @@ export default function OrderEntryPanel({
         return;
       }
     } else if (orderType === "market") {
-      if (!sellQty) {
+      if (!sellMarketQty) {
         toast.error("Vui lòng nhập số lượng");
         return;
       }
@@ -184,6 +225,7 @@ export default function OrderEntryPanel({
       setSellLoading(true);
 
       const symbolCode = symbol?.code || pair.replace("_", "");
+      const qty = orderType === "limit" ? sellQty : sellMarketQty;
       const orderData: {
         symbol: string;
         side: "BUY" | "SELL";
@@ -198,7 +240,7 @@ export default function OrderEntryPanel({
         symbol: symbolCode,
         side: "SELL",
         type: orderType === "limit" ? "LIMIT" : "MARKET",
-        qty: sellQty,
+        qty: qty,
         client_order_id: `sell_${Date.now()}`,
       };
 
@@ -210,7 +252,7 @@ export default function OrderEntryPanel({
 
       // Nếu market order, thêm quote_order_qty nếu chọn quote asset
       if (orderType === "market" && sellMarketAsset === quoteCurrency) {
-        orderData.quote_order_qty = sellQty;
+        orderData.quote_order_qty = qty;
         delete orderData.qty;
       }
 
@@ -224,6 +266,8 @@ export default function OrderEntryPanel({
       );
       setSellPrice("");
       setSellQty("");
+      setSellMarketQty("");
+      setSellSliderValue(0);
     } catch (error) {
       const errorMsg =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -328,9 +372,26 @@ export default function OrderEntryPanel({
                     showButtons={true}
                   />
 
-                  {/* Slider */}
-                  <div className="">
-                    <input type="range" className="w-full h-0.5 " />
+                  {/* Slider - BUY */}
+                  <div className="px-1 py-2">
+                    <InputRange
+                      value={
+                        buyQty && currentPrice
+                          ? (parseFloat(buyQty) /
+                              (parseFloat(quoteAssetBalance) / currentPrice)) *
+                            100
+                          : 0
+                      }
+                      onChange={(sliderValue) => {
+                        const maxBuyQty =
+                          parseFloat(quoteAssetBalance) / currentPrice;
+                        const qty = ((sliderValue / 100) * maxBuyQty).toFixed(
+                          8
+                        );
+                        setBuyQty(qty);
+                      }}
+                      max={100}
+                    />
                   </div>
 
                   <NumberInput
@@ -413,9 +474,25 @@ export default function OrderEntryPanel({
                     showButtons={true}
                   />
 
-                  {/* Slider */}
-                  <div className="">
-                    <input type="range" className="w-full h-0.5 " />
+                  {/* Slider - SELL */}
+                  <div className="px-1 py-2">
+                    <InputRange
+                      value={
+                        sellQty && currentPrice
+                          ? (parseFloat(sellQty) /
+                              parseFloat(baseAssetBalance || "1")) *
+                            100
+                          : 0
+                      }
+                      onChange={(sliderValue) => {
+                        const qty = (
+                          (sliderValue / 100) *
+                          parseFloat(baseAssetBalance || "0")
+                        ).toFixed(8);
+                        setSellQty(qty);
+                      }}
+                      max={100}
+                    />
                   </div>
 
                   <NumberInput
@@ -492,18 +569,44 @@ export default function OrderEntryPanel({
 
                   <NumberInput
                     label="Số lượng"
-                    value={buyQty}
-                    onChange={setBuyQty}
+                    value={buyMarketQty}
+                    onChange={setBuyMarketQty}
                     unit={buyMarketAsset}
                     showButtons={true}
                     buttonType="selector"
                     assets={[quoteCurrency, baseCurrency]}
                     onAssetChange={setBuyMarketAsset}
                   />
-
-                  {/* Slider */}
-                  <div className="">
-                    <input type="range" className="w-full h-0.5 " />
+                  {buyMarketAsset === baseCurrency && (
+                    <div className="text-[10px] dark:text-gray-300 text-gray-500 italic mb-1  text-right">
+                      Để tham khảo, có thể thay đổi tùy thuộc vào kết quả
+                    </div>
+                  )}
+                  {/* Slider - MARKET BUY */}
+                  <div className="px-1 py-2">
+                    <InputRange
+                      value={buySliderValue}
+                      onChange={(sliderValue) => {
+                        setBuySliderValue(sliderValue);
+                        if (buyMarketAsset === quoteCurrency) {
+                          const maxBuyQty = parseFloat(
+                            quoteAssetBalance || "0"
+                          );
+                          const qty = ((sliderValue / 100) * maxBuyQty).toFixed(
+                            8
+                          );
+                          setBuyMarketQty(qty);
+                        } else {
+                          const maxBuyQty =
+                            parseFloat(quoteAssetBalance) / currentPrice;
+                          const qty = ((sliderValue / 100) * maxBuyQty).toFixed(
+                            8
+                          );
+                          setBuyMarketQty(qty);
+                        }
+                      }}
+                      max={100}
+                    />
                   </div>
 
                   {/* Available - BUY */}
@@ -526,17 +629,16 @@ export default function OrderEntryPanel({
                       </div>
                     </div>
                     <div className="flex justify-between dark:text-white text-black">
-                      <span className="dark:text-gray-500 text-gray-400">
-                        Tổng (ước tính)
+                      <span className="underline dark:text-gray-500 text-gray-400">
+                        Mua tối đa
                       </span>
                       <span>
-                        {buyQty && currentPrice
-                          ? buyMarketAsset === quoteCurrency
-                            ? `${buyQty} ${quoteCurrency}`
-                            : `${(parseFloat(buyQty) * currentPrice).toFixed(
-                                8
-                              )} ${quoteCurrency}`
-                          : `0 ${quoteCurrency}`}
+                        {loading || !currentPrice
+                          ? "--"
+                          : (
+                              parseFloat(quoteAssetBalance) / currentPrice
+                            ).toFixed(8)}{" "}
+                        {baseCurrency}
                       </span>
                     </div>
                   </div>
@@ -573,8 +675,8 @@ export default function OrderEntryPanel({
 
                   <NumberInput
                     label="Số lượng"
-                    value={sellQty}
-                    onChange={setSellQty}
+                    value={sellMarketQty}
+                    onChange={setSellMarketQty}
                     unit={sellMarketAsset}
                     showButtons={true}
                     buttonType="selector"
@@ -582,9 +684,33 @@ export default function OrderEntryPanel({
                     onAssetChange={setSellMarketAsset}
                   />
 
-                  {/* Slider */}
-                  <div className="">
-                    <input type="range" className="w-full h-0.5 " />
+                  {/* Slider - MARKET SELL */}
+                  <div className="px-1 py-2">
+                    <InputRange
+                      value={sellSliderValue}
+                      onChange={(sliderValue) => {
+                        setSellSliderValue(sliderValue);
+                        if (sellMarketAsset === baseCurrency) {
+                          const maxSellQty = parseFloat(
+                            baseAssetBalance || "0"
+                          );
+                          const qty = (
+                            (sliderValue / 100) *
+                            maxSellQty
+                          ).toFixed(8);
+                          setSellMarketQty(qty);
+                        } else {
+                          const maxSellQty =
+                            parseFloat(baseAssetBalance) * currentPrice;
+                          const qty = (
+                            (sliderValue / 100) *
+                            maxSellQty
+                          ).toFixed(8);
+                          setSellMarketQty(qty);
+                        }
+                      }}
+                      max={100}
+                    />
                   </div>
 
                   {/* Available - SELL */}
@@ -598,17 +724,16 @@ export default function OrderEntryPanel({
                       </span>
                     </div>
                     <div className="flex justify-between dark:text-white text-black">
-                      <span className="dark:text-gray-500 text-gray-400">
-                        Tổng (ước tính)
+                      <span className="underline dark:text-gray-500 text-gray-400">
+                        Bán tối đa
                       </span>
                       <span>
-                        {sellQty && currentPrice
-                          ? sellMarketAsset === baseCurrency
-                            ? `${(parseFloat(sellQty) * currentPrice).toFixed(
-                                8
-                              )} ${quoteCurrency}`
-                            : `${sellQty} ${quoteCurrency}`
-                          : `0 ${quoteCurrency}`}
+                        {loading || !currentPrice
+                          ? "--"
+                          : (
+                              parseFloat(baseAssetBalance) * currentPrice
+                            ).toFixed(8)}{" "}
+                        {quoteCurrency}
                       </span>
                     </div>
                   </div>

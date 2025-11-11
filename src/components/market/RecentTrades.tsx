@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import TabUnderline from "@/components/ui/TabUnderline";
 import { fmt, formatTime } from "@/lib/formatters";
-import { useRecentTrades } from "@/hooks";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/lib/axiosInstance";
 
 interface Trade {
   id: string;
@@ -15,31 +12,8 @@ interface Trade {
   takerSide: "BUY" | "SELL";
 }
 
-export default function RecentTrades({ pair }: { pair: string }) {
+export default function RecentTrades({ trades }: { trades: Trade[] }) {
   const [activeTab, setActiveTab] = useState<"market" | "user">("market");
-
-  const symbol = useMemo(() => pair.replace("_", ""), [pair]);
-
-  // Fetch initial recent trades data from REST API
-  const { data: initialTrades } = useQuery<Trade[]>({
-    queryKey: ["recentTrades", symbol],
-    queryFn: () =>
-      axiosInstance
-        .get(`/trades/recent/${symbol}`, { params: { limit: 50 } })
-        .then((r) => r.data?.data || []),
-    refetchOnWindowFocus: false,
-  });
-
-  // Subscribe to WebSocket updates
-  const { trades: wsTrades } = useRecentTrades(symbol);
-
-  // Use WebSocket update if available, otherwise use initial data from REST API
-  const trades = useMemo(() => {
-    const ws = wsTrades as Trade[] | null;
-    if (Array.isArray(ws) && ws.length > 0) return ws;
-    if (Array.isArray(initialTrades)) return initialTrades;
-    return [];
-  }, [wsTrades, initialTrades]);
 
   const formatQuantity = (quantity: string | number) => {
     const num = typeof quantity === "string" ? parseFloat(quantity) : quantity;

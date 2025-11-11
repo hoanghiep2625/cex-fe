@@ -24,12 +24,19 @@ export interface Trade {
   id: string;
   symbol: string;
   price: string;
-  qty: string;
-  quoteQty: string;
+  quantity: string;
   time: number;
   takerSide: "BUY" | "SELL";
   created_at?: string;
 }
+
+export interface ApiResponse<T = Record<string, unknown>> {
+  statusCode: number;
+  message: string;
+  data: T;
+}
+
+// TradesResponse is now redundant, use ApiResponse<Trade[]> directly
 
 export interface OrderBookLevel {
   price: number;

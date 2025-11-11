@@ -85,13 +85,19 @@ export default function ChartPanel({
   });
 
   const { candles: wsCandles } = useCandles(symbolCode, interval, type, 500);
+
+  // Ưu tiên WebSocket data nếu có, nếu không dùng REST API data
   const typedCandles = useMemo(() => {
     const ws = wsCandles as Candle[] | null;
-    if (ws && ws.length > 0) return ws;
-    return initialCandles || [];
+    // Nếu ws có data thì dùng ws, ngược lại dùng initialCandles
+    if (Array.isArray(ws) && ws.length > 0) {
+      return ws;
+    }
+    return Array.isArray(initialCandles) ? initialCandles : [];
   }, [wsCandles, initialCandles]);
 
-  const loading = candlesLoading && !typedCandles.length;
+  // Loading chỉ true khi REST API đang load và chưa có data nào
+  const loading = candlesLoading && !Array.isArray(initialCandles);
 
   // Detect dark mode
   useEffect(() => {
@@ -138,38 +144,43 @@ export default function ChartPanel({
       chartContainerRef.current
     ) {
       const win = window as TradingViewWindow;
+      // Clear previous widget
       chartContainerRef.current.innerHTML = "";
 
       if (win.TradingView) {
-        new win.TradingView.widget({
-          autosize: true,
-          symbol: pair.replace("_", ""),
-          interval: timeframe,
-          timezone: "Etc/UTC",
-          theme: isDark ? "dark" : "light",
-          style: "1",
-          locale: "vi",
-          enable_publishing: false,
-          allow_symbol_change: true,
-          container_id: "tradingview-chart",
-          hide_side_toolbar: false,
-          hide_top_toolbar: true,
-          withdateranges: false,
-          hide_legend: false,
-          save_image: false,
-          studies_overrides: {},
-          overrides: {},
-          toolbar_bg: isDark ? "#181A20" : "#ffffff",
-          disabled_features: [
-            "header_widget",
-            "timeframes_toolbar",
-            "header_chart_type",
-            "header_indicators",
-          ],
-        });
+        try {
+          new win.TradingView.widget({
+            autosize: true,
+            symbol: symbolCode,
+            interval: timeframe,
+            timezone: "Etc/UTC",
+            theme: isDark ? "dark" : "light",
+            style: "1",
+            locale: "vi",
+            enable_publishing: false,
+            allow_symbol_change: false,
+            container_id: "tradingview-chart",
+            hide_side_toolbar: false,
+            hide_top_toolbar: true,
+            withdateranges: false,
+            hide_legend: false,
+            save_image: false,
+            studies_overrides: {},
+            overrides: {},
+            toolbar_bg: isDark ? "#181A20" : "#ffffff",
+            disabled_features: [
+              "header_widget",
+              "timeframes_toolbar",
+              "header_chart_type",
+              "header_indicators",
+            ],
+          });
+        } catch (err) {
+          console.error("Failed to initialize TradingView widget:", err);
+        }
       }
     }
-  }, [chartType, timeframe, scriptLoaded, isDark, pair]);
+  }, [chartType, timeframe, scriptLoaded, isDark, symbolCode]);
 
   // Chart UI component
   return (
@@ -298,7 +309,7 @@ export default function ChartPanel({
           </div>
           <div className="flex-1 rounded-b-[10px] overflow-hidden">
             {chartType === "goc" && (
-              <div className="w-full h-full">
+              <div className="w-full h-full" key={`chart-${interval}`}>
                 {loading ? (
                   <div className="w-full h-full flex items-center justify-center dark:text-gray-400 text-gray-600">
                     <Bars
@@ -312,7 +323,11 @@ export default function ChartPanel({
                     />
                   </div>
                 ) : (
-                  <CandlestickChart candles={typedCandles} isDark={isDark} />
+                  <CandlestickChart
+                    key={`candles-${interval}`}
+                    candles={typedCandles}
+                    isDark={isDark}
+                  />
                 )}
               </div>
             )}
